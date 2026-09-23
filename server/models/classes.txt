@@ -1,0 +1,8 @@
+fire_extinguisher
+fire_hydrant
+open_electrical_box
+exposed_wire
+fire_corridor_blocked
+smoke
+flame
+no_helmet

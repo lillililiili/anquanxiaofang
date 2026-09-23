@@ -1,0 +1,14 @@
+path: datasets/fire-safety
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: fire_extinguisher
+  1: fire_hydrant
+  2: open_electrical_box
+  3: exposed_wire
+  4: fire_corridor_blocked
+  5: smoke
+  6: flame
+  7: no_helmet

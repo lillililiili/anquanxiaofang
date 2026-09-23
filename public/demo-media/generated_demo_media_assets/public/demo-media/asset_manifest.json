@@ -1,0 +1,405 @@
+{
+  "project": "消防与用电安全智能检查服务平台 Demo 媒体素材包",
+  "version": "1.0",
+  "basePath": "/demo-media",
+  "counts": {
+    "images": 29,
+    "videos": 6,
+    "audio_mp3": 6,
+    "audio_wav": 6
+  },
+  "assets": [
+    {
+      "id": "audio_waveform_card",
+      "type": "image",
+      "path": "/demo-media/images/audio_waveform_card.png",
+      "title": "audio_waveform_card.png",
+      "description": "audio_waveform_card.png",
+      "tags": []
+    },
+    {
+      "id": "evidence_cable_exposed",
+      "type": "image",
+      "path": "/demo-media/images/evidence_cable_exposed.jpg",
+      "title": "线缆裸露",
+      "description": "线缆裸露",
+      "tags": []
+    },
+    {
+      "id": "evidence_electrical_cabinet_visible",
+      "type": "image",
+      "path": "/demo-media/images/evidence_electrical_cabinet_visible.jpg",
+      "title": "evidence_electrical_cabinet_visible.jpg",
+      "description": "evidence_electrical_cabinet_visible.jpg",
+      "tags": []
+    },
+    {
+      "id": "evidence_electrical_panel_open",
+      "type": "image",
+      "path": "/demo-media/images/evidence_electrical_panel_open.jpg",
+      "title": "配电箱未关闭",
+      "description": "配电箱未关闭",
+      "tags": []
+    },
+    {
+      "id": "evidence_extinguisher_low_pressure",
+      "type": "image",
+      "path": "/demo-media/images/evidence_extinguisher_low_pressure.jpg",
+      "title": "灭火器压力不足",
+      "description": "灭火器压力不足",
+      "tags": []
+    },
+    {
+      "id": "evidence_fire_corridor_blocked",
+      "type": "image",
+      "path": "/demo-media/images/evidence_fire_corridor_blocked.jpg",
+      "title": "消防通道占用",
+      "description": "消防通道占用",
+      "tags": []
+    },
+    {
+      "id": "evidence_hot_work_temp_power",
+      "type": "image",
+      "path": "/demo-media/images/evidence_hot_work_temp_power.jpg",
+      "title": "evidence_hot_work_temp_power.jpg",
+      "description": "evidence_hot_work_temp_power.jpg",
+      "tags": []
+    },
+    {
+      "id": "evidence_hydrant_extinguisher",
+      "type": "image",
+      "path": "/demo-media/images/evidence_hydrant_extinguisher.jpg",
+      "title": "evidence_hydrant_extinguisher.jpg",
+      "description": "evidence_hydrant_extinguisher.jpg",
+      "tags": []
+    },
+    {
+      "id": "evidence_infrared_overheat",
+      "type": "image",
+      "path": "/demo-media/images/evidence_infrared_overheat.jpg",
+      "title": "红外测温异常",
+      "description": "红外测温异常",
+      "tags": []
+    },
+    {
+      "id": "evidence_kitchen_power_strip",
+      "type": "image",
+      "path": "/demo-media/images/evidence_kitchen_power_strip.jpg",
+      "title": "evidence_kitchen_power_strip.jpg",
+      "description": "evidence_kitchen_power_strip.jpg",
+      "tags": []
+    },
+    {
+      "id": "evidence_park_factory_map",
+      "type": "image",
+      "path": "/demo-media/images/evidence_park_factory_map.jpg",
+      "title": "evidence_park_factory_map.jpg",
+      "description": "evidence_park_factory_map.jpg",
+      "tags": []
+    },
+    {
+      "id": "evidence_property_equipment_room",
+      "type": "image",
+      "path": "/demo-media/images/evidence_property_equipment_room.jpg",
+      "title": "evidence_property_equipment_room.jpg",
+      "description": "evidence_property_equipment_room.jpg",
+      "tags": []
+    },
+    {
+      "id": "evidence_temp_power_box",
+      "type": "image",
+      "path": "/demo-media/images/evidence_temp_power_box.jpg",
+      "title": "evidence_temp_power_box.jpg",
+      "description": "evidence_temp_power_box.jpg",
+      "tags": []
+    },
+    {
+      "id": "location_trajectory_map",
+      "type": "image",
+      "path": "/demo-media/images/location_trajectory_map.png",
+      "title": "位置轨迹平面图",
+      "description": "位置轨迹平面图",
+      "tags": []
+    },
+    {
+      "id": "page_evidence_tabs_mockup",
+      "type": "image",
+      "path": "/demo-media/images/page_evidence_tabs_mockup.png",
+      "title": "page_evidence_tabs_mockup.png",
+      "description": "page_evidence_tabs_mockup.png",
+      "tags": []
+    },
+    {
+      "id": "page_hazard_registration",
+      "type": "image",
+      "path": "/demo-media/images/page_hazard_registration.png",
+      "title": "page_hazard_registration.png",
+      "description": "page_hazard_registration.png",
+      "tags": []
+    },
+    {
+      "id": "page_remote_expert_console",
+      "type": "image",
+      "path": "/demo-media/images/page_remote_expert_console.png",
+      "title": "page_remote_expert_console.png",
+      "description": "page_remote_expert_console.png",
+      "tags": []
+    },
+    {
+      "id": "page_report_center",
+      "type": "image",
+      "path": "/demo-media/images/page_report_center.png",
+      "title": "page_report_center.png",
+      "description": "page_report_center.png",
+      "tags": []
+    },
+    {
+      "id": "page_report_center_three_pages",
+      "type": "image",
+      "path": "/demo-media/images/page_report_center_three_pages.png",
+      "title": "page_report_center_three_pages.png",
+      "description": "page_report_center_three_pages.png",
+      "tags": []
+    },
+    {
+      "id": "rectification_after",
+      "type": "image",
+      "path": "/demo-media/images/rectification_after.jpg",
+      "title": "整改后照片",
+      "description": "整改后照片",
+      "tags": []
+    },
+    {
+      "id": "rectification_before",
+      "type": "image",
+      "path": "/demo-media/images/rectification_before.jpg",
+      "title": "整改前照片",
+      "description": "整改前照片",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_01",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_01.jpg",
+      "title": "rectification_process_01.jpg",
+      "description": "rectification_process_01.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_02",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_02.jpg",
+      "title": "rectification_process_02.jpg",
+      "description": "rectification_process_02.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_03",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_03.jpg",
+      "title": "rectification_process_03.jpg",
+      "description": "rectification_process_03.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_04",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_04.jpg",
+      "title": "rectification_process_04.jpg",
+      "description": "rectification_process_04.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_05",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_05.jpg",
+      "title": "rectification_process_05.jpg",
+      "description": "rectification_process_05.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_06",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_06.jpg",
+      "title": "rectification_process_06.jpg",
+      "description": "rectification_process_06.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_07",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_07.jpg",
+      "title": "rectification_process_07.jpg",
+      "description": "rectification_process_07.jpg",
+      "tags": []
+    },
+    {
+      "id": "rectification_process_08",
+      "type": "image",
+      "path": "/demo-media/images/rectification_process_08.jpg",
+      "title": "rectification_process_08.jpg",
+      "description": "rectification_process_08.jpg",
+      "tags": []
+    },
+    {
+      "id": "extinguisher_pressure_check",
+      "type": "video",
+      "path": "/demo-media/videos/extinguisher_pressure_check.mp4",
+      "title": "extinguisher_pressure_check",
+      "description": "本地生成的演示视频素材",
+      "tags": [
+        "视频关键帧"
+      ]
+    },
+    {
+      "id": "fire_corridor_obstruction",
+      "type": "video",
+      "path": "/demo-media/videos/fire_corridor_obstruction.mp4",
+      "title": "fire_corridor_obstruction",
+      "description": "本地生成的演示视频素材",
+      "tags": [
+        "视频关键帧"
+      ]
+    },
+    {
+      "id": "helmet_live_electrical_inspection",
+      "type": "video",
+      "path": "/demo-media/videos/helmet_live_electrical_inspection.mp4",
+      "title": "helmet_live_electrical_inspection",
+      "description": "本地生成的演示视频素材",
+      "tags": [
+        "视频关键帧"
+      ]
+    },
+    {
+      "id": "hot_work_temp_power_check",
+      "type": "video",
+      "path": "/demo-media/videos/hot_work_temp_power_check.mp4",
+      "title": "hot_work_temp_power_check",
+      "description": "本地生成的演示视频素材",
+      "tags": [
+        "视频关键帧"
+      ]
+    },
+    {
+      "id": "location_trajectory_replay",
+      "type": "video",
+      "path": "/demo-media/videos/location_trajectory_replay.mp4",
+      "title": "location_trajectory_replay",
+      "description": "本地生成的演示视频素材",
+      "tags": [
+        "视频关键帧"
+      ]
+    },
+    {
+      "id": "rectification_before_after",
+      "type": "video",
+      "path": "/demo-media/videos/rectification_before_after.mp4",
+      "title": "rectification_before_after",
+      "description": "本地生成的演示视频素材",
+      "tags": [
+        "视频关键帧"
+      ]
+    },
+    {
+      "id": "audio_hazard_description",
+      "type": "audio",
+      "path": "/demo-media/audio/audio_hazard_description.mp3",
+      "title": "隐患现场描述",
+      "description": "现场发现配电箱门未关闭，线缆存在裸露，有触电风险，请尽快安排整改。",
+      "transcript": "现场发现配电箱门未关闭，线缆存在裸露，有触电风险，请尽快安排整改。",
+      "tags": [
+        "语音记录"
+      ]
+    },
+    {
+      "id": "audio_expert_instruction",
+      "type": "audio",
+      "path": "/demo-media/audio/audio_expert_instruction.mp3",
+      "title": "专家远程指导",
+      "description": "请检查配电箱内部接线情况，补拍箱门锁具和回路标识，并确认漏电保护器状态。",
+      "transcript": "请检查配电箱内部接线情况，补拍箱门锁具和回路标识，并确认漏电保护器状态。",
+      "tags": [
+        "语音记录"
+      ]
+    },
+    {
+      "id": "audio_rectification_update",
+      "type": "audio",
+      "path": "/demo-media/audio/audio_rectification_update.mp3",
+      "title": "整改沟通记录",
+      "description": "整改人员已关闭配电箱门并完成线缆绝缘包扎，现场环境已经清理。",
+      "transcript": "整改人员已关闭配电箱门并完成线缆绝缘包扎，现场环境已经清理。",
+      "tags": [
+        "语音记录"
+      ]
+    },
+    {
+      "id": "audio_recheck_result",
+      "type": "audio",
+      "path": "/demo-media/audio/audio_recheck_result.mp3",
+      "title": "复查验收语音",
+      "description": "经现场复查，配电箱门已关闭并上锁，警示标识齐全，复查结果通过。",
+      "transcript": "经现场复查，配电箱门已关闭并上锁，警示标识齐全，复查结果通过。",
+      "tags": [
+        "语音记录"
+      ]
+    },
+    {
+      "id": "audio_enterprise_confirm",
+      "type": "audio",
+      "path": "/demo-media/audio/audio_enterprise_confirm.mp3",
+      "title": "企业确认语音",
+      "description": "企业确认该隐患已完成整改，整改结果符合现场安全管理要求。",
+      "transcript": "企业确认该隐患已完成整改，整改结果符合现场安全管理要求。",
+      "tags": [
+        "语音记录"
+      ]
+    },
+    {
+      "id": "audio_patrol_note",
+      "type": "audio",
+      "path": "/demo-media/audio/audio_patrol_note.mp3",
+      "title": "巡检备注语音",
+      "description": "本次巡检覆盖配电室、消防通道和设备间，发现问题已全部记录。",
+      "transcript": "本次巡检覆盖配电室、消防通道和设备间，发现问题已全部记录。",
+      "tags": [
+        "语音记录"
+      ]
+    }
+  ],
+  "pageMapping": {
+    "/helmet-live": [
+      "videos/helmet_live_electrical_inspection.mp4",
+      "images/evidence_electrical_panel_open.jpg",
+      "images/evidence_extinguisher_low_pressure.jpg"
+    ],
+    "/ai-analysis": [
+      "images/evidence_electrical_panel_open.jpg",
+      "images/evidence_infrared_overheat.jpg"
+    ],
+    "/hazards/register": [
+      "images/evidence_electrical_panel_open.jpg",
+      "images/evidence_cable_exposed.jpg",
+      "videos/fire_corridor_obstruction.mp4",
+      "audio/audio_hazard_description.mp3",
+      "images/location_trajectory_map.png"
+    ],
+    "/hazards/rectification": [
+      "images/rectification_before.jpg",
+      "images/rectification_after.jpg",
+      "images/rectification_process_01.jpg",
+      "audio/audio_rectification_update.mp3"
+    ],
+    "/expert": [
+      "videos/helmet_live_electrical_inspection.mp4",
+      "audio/audio_expert_instruction.mp3"
+    ],
+    "/reports/generate": [
+      "images/page_report_center.png",
+      "images/evidence_electrical_panel_open.jpg",
+      "images/evidence_fire_corridor_blocked.jpg",
+      "audio/audio_recheck_result.mp3"
+    ]
+  }
+}
