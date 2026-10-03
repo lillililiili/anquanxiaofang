@@ -7,7 +7,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: "index.html",
-        design: "design-preview.html"
+        design: "design-preview.html",
+        visual: "visual-preview.html"
       }
     }
   },

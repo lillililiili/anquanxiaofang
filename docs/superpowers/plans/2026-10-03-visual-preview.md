@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a standalone visual preview page that combines the generated brand mark, login hero, and premium card backgrounds so the visual direction can be reviewed before production route integration.
+**Goal:** Build a standalone visual preview page that demonstrates the full system visual language across login, dashboard, hazard closure, field devices, reports, analytics, and knowledge pages before production route integration.
 
-**Architecture:** Keep the current production app untouched. Add a second Vite HTML entry at `/visual-preview.html` with a focused React preview component under `src/design/`. The preview has a login composition on top and a card-material gallery below, using only local assets under `public/brand/` and `public/ui-backgrounds/`.
+**Architecture:** Keep the current production app untouched. Add a second Vite HTML entry at `/visual-preview.html` with a focused React preview component under `src/design/`. The preview uses a shared navigation frame plus page-specific visual compositions, using only local assets under `public/brand/` and `public/ui-backgrounds/`.
 
 **Tech Stack:** React 18, TypeScript, Vite, lucide-react, CSS, generated PNG assets.
 
@@ -84,13 +84,13 @@ const assets = {
 
 Render a two-column `section` with the hero image and a dark login card. Include HTML text for the product name, the sentence “每一处风险，都有迹可循”, demo account fields, and a non-submitting “进入演示预览” button that updates a small inline status message.
 
-- [ ] **Step 4: Render the card-material gallery**
+- [ ] **Step 4: Render the system page previews**
 
-Render six clickable-looking but non-destructive material cards with local images, category labels, and usage descriptions. The cards are preview-only and must not pretend to open production workflows.
+Render seven page states: login, dashboard, hazard closure, field devices, reports, analytics, and knowledge center. Reuse shared shell components for sidebar, topbar, metric cards, image panels, and evidence strips so the visual language is visibly consistent.
 
-- [ ] **Step 5: Add a variation switcher**
+- [ ] **Step 5: Add a page switcher**
 
-Render a small bottom control with two states: `登录入口` and `卡片材质`. Switching state changes the preview focus and exposes both the login composition and the gallery without URL state or persistence.
+Render a small bottom control with one button per page state. Switching state changes the preview focus without URL state or persistence. Add a compact asset legend in the dashboard state so each generated background's intended use is visible.
 
 ### Task 3: Style the preview page
 
@@ -108,9 +108,9 @@ Use deep navy `#071B31`, steel blue `#356B9B`, amber `#F1B65C`, cool white `#F5F
 
 Use a 12-column CSS grid with the hero spanning 7 columns and the login panel spanning 5 columns on desktop. Use `minmax(0, 1fr)` and `overflow: hidden` for all repeated cards.
 
-- [ ] **Step 3: Style card material previews**
+- [ ] **Step 3: Style shared workspace and page cards**
 
-Use a responsive three-column grid on desktop and a one-column stack below 720px. Every card gets a fixed image frame, `object-fit: cover`, a dark bottom gradient, and visible focus styles.
+Use a compact dark sidebar, pale content canvas, 12-column content grid, fixed image frames, `object-fit: cover`, dark bottom gradients, and visible focus styles. Keep page-specific layouts balanced: dashboard metrics and evidence, hazard timeline and risk cards, device status cards, report evidence, analytics map image, and knowledge graph image.
 
 - [ ] **Step 4: Add responsive and reduced-motion rules**
 
