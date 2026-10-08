@@ -1,0 +1,537 @@
+[
+  {
+    "viewport": 1440,
+    "page": "运营工作台",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "检查任务",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1063,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "安全帽现场端",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "隐患登记",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "隐患整改",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1087,
+        "width": 1087
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "隐患统计看板",
+    "bodyFont": [],
+    "scrollWidth": 1425,
+    "tables": [],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "隐患超期预警",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "远程专家",
+    "bodyFont": [],
+    "scrollWidth": 1425,
+    "tables": [],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "大模型中台",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "知识库",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "隐患图谱",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "专家规则库",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1047,
+        "width": 1047
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "数据看板",
+    "bodyFont": [],
+    "scrollWidth": 1425,
+    "tables": [],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "预警中心 12",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1087,
+        "width": 1087
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "报告中心",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1087,
+        "width": 1087
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "客户与项目档案",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 785,
+        "width": 785
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "项目管理",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 785,
+        "width": 785
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "设备管理",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1072,
+        "width": 1072
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "检查模板",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [
+      {
+        "scrollWidth": 1087,
+        "width": 1087
+      }
+    ],
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "page": "系统管理",
+    "bodyFont": [
+      {
+        "size": "13px",
+        "weight": "400"
+      }
+    ],
+    "scrollWidth": 1425,
+    "tables": [],
+    "width": 1425
+  },
+  {
+    "viewport": 1920,
+    "page": "运营工作台",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1519,
+        "width": 1519
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "检查任务",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1519,
+        "width": 1519
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "安全帽现场端",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1519,
+        "width": 1519
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "隐患登记",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1519,
+        "width": 1519
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "隐患整改",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1559,
+        "width": 1559
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "隐患统计看板",
+    "scrollWidth": 1905,
+    "tables": [],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "隐患超期预警",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1519,
+        "width": 1519
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "远程专家",
+    "scrollWidth": 1905,
+    "tables": [],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "大模型中台",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1519,
+        "width": 1519
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "知识库",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1293,
+        "width": 1293
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "隐患图谱",
+    "scrollWidth": 1905,
+    "tables": [],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "专家规则库",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1293,
+        "width": 1293
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "数据看板",
+    "scrollWidth": 1905,
+    "tables": [],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "预警中心 12",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1567,
+        "width": 1567
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "报告中心",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1567,
+        "width": 1567
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "客户与项目档案",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1231,
+        "width": 1231
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "项目管理",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1231,
+        "width": 1231
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "设备管理",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1552,
+        "width": 1552
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "检查模板",
+    "scrollWidth": 1905,
+    "tables": [
+      {
+        "scrollWidth": 1341,
+        "width": 1341
+      }
+    ],
+    "width": 1905
+  },
+  {
+    "viewport": 1920,
+    "page": "系统管理",
+    "scrollWidth": 1905,
+    "tables": [],
+    "width": 1905
+  }
+]

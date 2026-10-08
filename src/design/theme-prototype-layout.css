@@ -1,0 +1,236 @@
+/* Layout repairs for the standalone prototype; keep its existing visual theme. */
+.page-stack {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.page-stack > *, .section-card, .toolbar > *, .filter-strip > * {
+  min-width: 0;
+}
+
+.page-header h1 { font-size: 22px; font-weight: 600; line-height: 1.4; }
+.section-card h2 { font-size: 16px; font-weight: 600; line-height: 1.5; }
+.page-header p { line-height: 1.6; }
+.intelligence-complete .page-header, .expert-complete .page-header { margin-bottom: 0; }
+.metric-grid, .metric-grid.compact, .dashboard-grid, .stats-layout, .analytics-grid,
+.demo-knowledge-layout, .rules-complete-layout, .graph-complete-layout,
+.graph-complete-main, .graph-complete-right, .expert-console-layout,
+.expert-bottom-layout { gap: 16px; }
+
+.toolbar, .filter-strip { flex-wrap: wrap; align-items: end; gap: 12px; }
+.toolbar > .field, .filter-strip > .field { flex: 1 1 150px; min-width: 140px; }
+.toolbar > .search-field { flex: 2 1 280px; min-width: 220px; }
+.toolbar > select { flex: 1 1 160px; width: auto; min-width: 140px; }
+.toolbar > .ui-button, .toolbar > .batch-menu, .filter-strip > .ui-button { flex: 0 0 auto; }
+.graph-toolbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) auto; }
+.graph-toolbar > .field { min-width: 0; }
+.toolbar-actions { display: flex; align-items: center; gap: 8px; }
+.field { min-width: 0; }
+.field > span, .rule-detail-form .field > span { font-size: 13px; font-weight: 500; letter-spacing: 0; }
+input, select, textarea { font-size: 13px; }
+.ui-button { font-size: 13px; font-weight: 500; }
+.ui-button.primary { background: #2563a5; box-shadow: 0 5px 12px rgba(37, 99, 165, .15); }
+
+/* Native choice controls must not inherit the full-width text-field dimensions. */
+input[type="radio"], input[type="checkbox"], .check-line input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--blue);
+}
+.choice-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.choice-row label {
+  min-width: 0;
+  min-height: 28px;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text);
+}
+.choice-row + .choice-row { padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.check-line { min-height: 28px; gap: 8px; font-size: 13px; line-height: 20px; }
+
+/* Stable table columns and readable body text. Scroll only the table if needed. */
+.table-wrap { min-width: 0; max-width: 100%; overflow: auto; }
+.data-table { font-variant-numeric: tabular-nums; }
+.data-table th { font-size: 13px; font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+.data-table td { font-size: 13px; font-weight: 400; line-height: 20px; }
+.data-table td strong { font-size: 13px; font-weight: 400; }
+.data-table td small { font-size: 12px; font-weight: 400; }
+.generic-table { table-layout: fixed; }
+.generic-table col.table-col-main { width: 26%; }
+.generic-table col.table-col-time { width: 150px; }
+.generic-table col.table-col-status { width: 90px; }
+.generic-table col.table-col-action { width: 100px; }
+.table-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table-primary-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+}
+.row-actions { min-width: 0; flex-wrap: nowrap; gap: 4px; }
+.row-actions .ui-button { min-height: 30px; padding: 0 4px; font-size: 12px; }
+.status-pill { font-size: 12px; font-weight: 500; line-height: 22px; }
+.table-count, .metric-foot, .filter-note { font-size: 12px; }
+.knowledge-documents .data-table, .rule-list .data-table { min-width: 960px; }
+.knowledge-documents .data-table td, .rule-list .data-table td { white-space: nowrap; }
+.knowledge-documents .data-table td strong, .rule-list .data-table td strong {
+  max-width: 240px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.knowledge-documents .table-wrap, .rule-list .table-wrap { max-height: none; }
+.intelligence-complete > .section-card .data-table td:first-child,
+.intelligence-complete > .section-card .data-table td:last-child { white-space: nowrap; }
+
+/* Detail values remain readable; use the available width instead of ellipsis. */
+.detail-grid { grid-template-columns: 100px minmax(0, 1fr); gap: 12px 16px; }
+.detail-grid span { font-size: 13px; font-weight: 400; line-height: 1.6; }
+.detail-grid strong { font-size: 13px; font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
+.knowledge-detail { position: static; }
+.knowledge-detail .detail-grid { grid-template-columns: 72px minmax(0, 1fr); padding: 12px; }
+.knowledge-detail .detail-grid strong { overflow: visible; white-space: normal; text-overflow: clip; }
+.detail-copy, .document-preview p { font-size: 13px; line-height: 1.65; }
+.rule-detail-form { gap: 12px; padding: 0; }
+.rule-detail-form textarea { min-height: 76px; }
+.tree-row span, .tree-row b, .rule-tree > button, .tree-list button,
+.top-list button, .relation-item > span { font-size: 12px; line-height: 1.6; }
+.top-list em { flex: 0 0 22px; }
+.relation-item .ui-button { font-size: 12px; }
+
+/* Prevent the unstyled SVG from creating a square, screen-height graph. */
+.graph-complete-main > .section-card:first-child { overflow: hidden; }
+.graph-complete-main .graph-canvas { height: 480px; min-height: 480px; }
+.graph-scene { position: absolute; inset: 0; transform-origin: center; transition: transform .2s ease; }
+.graph-lines { display: block; pointer-events: none; }
+.graph-lines line { vector-effect: non-scaling-stroke; stroke-width: 1.5px; stroke-dasharray: 5 4; }
+.graph-lines line.active { stroke: #8ad8c9; stroke-width: 2px; }
+.graph-node { min-width: 0; max-width: 135px; padding: 9px 10px; font-size: 13px; }
+.graph-node.center { min-width: 124px; }
+.graph-categories { padding: 0; border: 0; background: none; box-shadow: none; }
+.graph-categories .section-card { padding: 16px; }
+
+/* Clear chart centers and labels, following the standard doughnut composition. */
+.donut {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 0 0 150px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 150px;
+  height: 150px;
+  padding: 0;
+  box-shadow: none;
+}
+.donut::before { content: ""; position: absolute; inset: 22px; z-index: -1; border-radius: 50%; background: var(--card); }
+.donut strong { font-size: 30px; line-height: 1.1; }
+.donut span { margin: 0; font-size: 12px; line-height: 1.4; }
+.analytics-grid .donut { background: conic-gradient(var(--blue) 0 42%, var(--amber) 42% 77%, var(--green) 77% 100%); }
+.stats-layout .donut { background: conic-gradient(var(--red) 0 17.76%, var(--amber) 17.76% 43.42%, var(--blue) 43.42% 100%); }
+.legend-list div { font-size: 12px; }
+.bars { padding-bottom: 28px; }
+.bars span { bottom: -23px; width: max-content; white-space: nowrap; font-size: 11px; }
+.chart-y, .chart-x { font-size: 11px; }
+.chart-legend { display: flex; align-items: center; gap: 18px; margin: 4px 0 12px; color: var(--muted); font-size: 12px; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.project-risk-list b { background: var(--blue); }
+.analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.analytics-grid .section-card:first-child { grid-row: auto; }
+.analytics-grid .section-card { min-height: 330px; }
+.analytics-grid .donut-wrap { min-height: 240px; }
+
+.expert-meta-strip, .expert-channel-card small, .channel-state { font-size: 12px; }
+.expert-channel-card { grid-template-columns: 24px 42px minmax(0, 1fr); }
+.expert-channel-card b { grid-column: 2 / -1; font-size: 12px; font-weight: 500; }
+.expert-channel-card small { white-space: normal; line-height: 1.5; }
+.expert-channel-strip { gap: 12px; }
+/* Keep the video and review panels on the same baseline. */
+.expert-console-layout { height: 640px; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+.expert-stage, .expert-review { display: flex; flex-direction: column; min-height: 0; }
+.expert-stage > .section-card-head, .expert-review > .section-card-head { flex: 0 0 auto; min-height: 44px; }
+.expert-stage .section-card-head { flex-wrap: wrap; gap: 8px 16px; }
+.expert-video-frame { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.expert-video-frame > img, .expert-video-frame > video { flex: 1; min-height: 0; height: 0; object-fit: contain; }
+.expert-video-controls { position: static; display: grid; flex: 0 0 auto; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+.expert-video-controls .ui-button { min-width: 0; min-height: 36px; gap: 4px; padding: 0 4px; white-space: nowrap; }
+.expert-video-controls .ui-button svg { flex-shrink: 0; width: 16px; height: 16px; }
+.expert-review { max-height: none; overflow: hidden; }
+.expert-review > .review-content, .expert-review > .review-simple { flex: 1; min-height: 0; overflow-y: auto; align-content: start; padding: 12px 4px; scrollbar-gutter: stable; }
+.review-tabs { display: grid; flex: 0 0 auto; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 0 0 12px; }
+.review-tabs button { padding: 0 4px; font-size: 12px; white-space: nowrap; }
+.hazard-review-list header strong { font-size: 13px; font-weight: 500; }
+.hazard-review-list small, .hazard-review-list p, .retake-box ul,
+.review-simple p, .review-simple li, .chat-log p, .muted-note { font-size: 12px; line-height: 1.6; }
+.expert-annotation-tools .ui-button, .expert-video-controls .ui-button { font-size: 12px; }
+.expert-bottom-layout { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+.expert-bottom-layout > .section-card { min-height: 280px; }
+.expert-bottom-layout .snapshot-grid { gap: 8px; padding: 0; }
+.expert-bottom-layout .snapshot-grid img { height: 84px; }
+.expert-bottom-layout .muted-note { padding: 12px 0 0; }
+.expert-bottom-layout .chat-log { padding: 0; }
+.expert-bottom-layout .detail-grid { margin: 0; }
+
+/* The directory launcher belongs in the top bar, not over table actions. */
+.directory-toggle { width: auto; min-height: 36px; padding: 0 10px; border-radius: 8px; box-shadow: none; }
+.directory-toggle span { font-size: 12px; font-weight: 500; }
+.directory-toggle small { font-size: 12px; }
+.directory-panel.open { top: 70px; right: 24px; bottom: auto; width: 330px; }
+.directory-body { margin-top: 8px; max-height: calc(100vh - 104px); }
+.directory-group button { font-size: 13px; min-height: 36px; }
+
+@media (max-width: 1680px) {
+  /* Reflow dense indexes before columns become too narrow to read. */
+  .demo-knowledge-layout, .rules-complete-layout { grid-template-columns: minmax(0, 1fr); }
+  .knowledge-tree, .rule-tree { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .knowledge-tree > .section-card-head, .rule-tree > .section-card-head { grid-column: 1 / -1; margin-bottom: 0; }
+  .knowledge-tree .tree-row, .rule-tree > button { width: 100%; margin: 0; }
+  .knowledge-tree .tree-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .knowledge-tree .tree-row .status-pill { grid-column: auto; }
+  .knowledge-detail, .rule-detail { grid-column: auto; }
+  .knowledge-detail .detail-grid { grid-template-columns: 90px minmax(0, 1fr) 90px minmax(0, 1fr); }
+  .rule-detail-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rule-detail-form .field.wide:nth-child(5), .rule-detail-form .field.wide:nth-child(6) { grid-column: auto; }
+  .rule-detail-form .field:nth-child(8), .rule-detail-form .detail-actions, .rule-detail-form .tag-list { grid-column: 1 / -1; }
+  .graph-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+  .graph-toolbar > .field:nth-child(4) { grid-column: 1; }
+  .graph-toolbar .toolbar-actions { grid-column: 4; grid-row: 1 / span 2; align-self: end; }
+  .graph-complete-layout { grid-template-columns: 176px minmax(0, 1fr); }
+  .graph-complete-right { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .graph-complete-main .graph-canvas { height: 440px; min-height: 440px; }
+  .expert-channel-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .expert-channel-card { grid-template-columns: 24px 42px minmax(0, 1fr); padding: 10px; gap: 4px 8px; }
+  .expert-channel-card > strong { grid-column: 1; grid-row: 1; }
+  .expert-channel-card img { grid-column: 2; grid-row: 1 / span 2; }
+  .expert-channel-card b { grid-column: 3; grid-row: 1; }
+  .expert-channel-card small { grid-column: 3; grid-row: 2; }
+  .expert-channel-card .channel-state { grid-column: 2; grid-row: 3; font-size: 11px; }
+  .expert-channel-card .status-pill { grid-column: 3; grid-row: 3; }
+  .expert-video-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .expert-stage .ptz-popover { bottom: 140px; }
+}
+
+@media (max-width: 1280px) {
+  .expert-console-layout { height: auto; grid-template-rows: auto; }
+  .expert-stage, .expert-review { height: 620px; }
+  .expert-bottom-layout > :last-child { grid-column: auto; }
+}
+
+@media (max-width: 1100px) {
+  .page-header { flex-wrap: wrap; }
+  .knowledge-detail .detail-grid { grid-template-columns: 90px minmax(0, 1fr); }
+  .graph-complete-right, .expert-bottom-layout { grid-template-columns: minmax(0, 1fr); }
+  .analytics-grid { grid-template-columns: minmax(0, 1fr); }
+  .knowledge-tree, .rule-tree { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .topbar-actions .theme-switch > span { display: none; }
+}

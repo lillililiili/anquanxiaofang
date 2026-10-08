@@ -83,15 +83,15 @@ body {
 .primary-btn {
   background: var(--primary-blue);
   border-color: var(--primary-blue);
-  color: #ffffff;
+  color: var(--surface-card);
   font-size: 13px;
   font-weight: 500;
 }
 
 .btn-secondary,
 .secondary-btn {
-  background: #ffffff;
-  border-color: #b7d4ff;
+  background: var(--surface-card);
+  border-color: var(--border-default);
   color: var(--primary-blue);
   font-size: 13px;
   font-weight: 500;
@@ -116,27 +116,27 @@ body {
 
 .tag-success,
 .tag-risk-low {
-  color: #027a48;
-  background: #ecfdf3;
+  color: var(--risk-green-text);
+  background: var(--risk-green-bg);
   border: 1px solid #abefc6;
 }
 
 .tag-warning,
 .tag-risk-medium {
-  color: #b54708;
-  background: #fff7e6;
+  color: var(--risk-orange-text);
+  background: var(--risk-orange-bg);
   border: 1px solid #ffd591;
 }
 
 .tag-danger,
 .tag-risk-high {
-  color: #d92d20;
-  background: #fff1f0;
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
   border: 1px solid #ffccc7;
 }
 
 .tag-info {
-  color: #175cd3;
+  color: var(--accent-blue);
   background: #eff8ff;
   border: 1px solid #b2ddff;
 }
@@ -208,7 +208,7 @@ body {
   height: 40px;
   padding: 0 12px;
   color: var(--text-secondary);
-  background: #f6f8fb;
+  background: var(--surface-raised);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -237,27 +237,27 @@ body {
 }
 
 .mc-badge.success {
-  color: #027a48;
-  background: #ecfdf3;
-  border-color: #abefc6;
+  color: var(--risk-green-text);
+  background: var(--risk-green-bg);
+  border-color: var(--risk-green-border);
 }
 
 .mc-badge.danger {
-  color: #d92d20;
-  background: #fff1f0;
-  border-color: #ffccc7;
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
+  border-color: var(--risk-red-border);
 }
 
 .mc-badge.warning {
-  color: #b54708;
-  background: #fff7e6;
-  border-color: #ffd591;
+  color: var(--risk-orange-text);
+  background: var(--risk-orange-bg);
+  border-color: var(--risk-orange-border);
 }
 
 .mc-badge.muted {
   color: #667085;
-  background: #f2f4f7;
-  border-color: #eaecf0;
+  background: var(--surface-raised);
+  border-color: var(--border-default);
 }
 
 .knowledge-tree > button {
@@ -273,7 +273,7 @@ body {
 }
 
 .knowledge-tree button.active {
-  background: #eef6ff;
+  background: var(--surface-accent);
   color: var(--primary-blue);
   font-weight: 500;
 }
@@ -353,8 +353,8 @@ body {
 
 .knowledge-detail em,
 .rule-detail em {
-  color: #d92d20;
-  background: #fff1f0;
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
   border: 1px solid #ffccc7;
   font-size: 12px;
   font-weight: 500;
@@ -431,33 +431,33 @@ body {
 }
 
 .badge.danger {
-  color: #b42318;
-  background: #fef3f2;
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
 }
 
 .badge.warning {
-  color: #b54708;
-  background: #fff6e8;
+  color: var(--risk-orange-text);
+  background: var(--risk-orange-bg);
 }
 
 .badge.running {
-  color: #175cd3;
-  background: #eff6ff;
+  color: var(--accent-blue);
+  background: var(--surface-accent);
 }
 
 .badge.success {
-  color: #027a48;
-  background: #ecfdf3;
+  color: var(--risk-green-text);
+  background: var(--risk-green-bg);
 }
 
 .badge.muted {
   color: #667085;
-  background: #f2f4f7;
+  background: var(--surface-raised);
 }
 
 .data-table tbody tr:not(.selected-row):not(.active):hover td,
 .action-table tbody tr:not(.selected-row):not(.active):hover td {
-  background-color: #f7faff;
+  background-color: var(--surface-raised);
 }
 
 .data-table .clickable-row {

@@ -1,0 +1,115 @@
+/* Demo layout audit: keep all fields, reserve readable space for each action. */
+.prototype-app :is(.page-header, .rm-header) { align-items: flex-start; }
+.prototype-app :is(.page-header-actions, .rm-header-actions) { flex-shrink: 0; }
+.prototype-app .section-card-head { gap: 12px; }
+.prototype-app .section-card-head > div { min-width: 0; }
+.prototype-app .section-card-head > :is(.ui-button, .table-count) { flex-shrink: 0; }
+.prototype-app :is(.table-wrap, .rm-table-scroll) { overscroll-behavior-inline: contain; }
+
+/* Filters share a baseline; action buttons stay together at the row's right. */
+.ph-page .ph-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px 16px;
+  padding: 16px;
+}
+.ph-page .ph-filters .field { margin: 0; gap: 6px; }
+.ph-page .ph-filters .search-field { min-width: 0; width: 100%; }
+.ph-page .ph-filter-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.ph-page .ph-filter-actions .ui-button { flex: 0 0 auto; min-width: 60px; }
+.ph-page .ph-overdue-filters { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 16px; }
+.ph-page .ph-overdue-filters > .field:first-child { grid-column: span 2; }
+
+/* Evidence cards respond to their panel width instead of using three tiny columns. */
+.ph-page .register-workspace { grid-template-columns: minmax(240px, .9fr) minmax(280px, 1.1fr) minmax(350px, 1.3fr); }
+.ph-page .clue-list { gap: 10px; max-height: 680px; padding-right: 3px; }
+.ph-page .clue-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; padding: 12px; gap: 8px; }
+.ph-page .clue-card-main { display: contents; }
+.ph-page .clue-card-main strong { grid-column: 1; grid-row: 1; font-size: 13px; line-height: 20px; white-space: normal; }
+.ph-page .clue-card-main small { grid-column: 1 / -1; grid-row: 2; font-size: 12px; line-height: 18px; white-space: normal; }
+.ph-page .clue-card-meta { grid-column: 1 / -1; grid-row: 3; gap: 4px; }
+.ph-page .clue-card-meta :is(span, small) { font-size: 12px; line-height: 18px; }
+.ph-page .clue-card > .status-pill { grid-column: 2; grid-row: 1; }
+.ph-page .register-workspace .evidence-grid.compact { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.ph-page .register-workspace .evidence-card img { height: 200px; object-fit: contain; background: var(--card-soft); }
+.ph-page .register-workspace .evidence-card strong { font-size: 13px; font-weight: 500; line-height: 1.6; }
+.ph-page .register-workspace .evidence-card span:last-child { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.ph-page .register-workspace .subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ph-page .register-workspace .subtabs button { font-size: 12px; font-weight: 400; }
+.ph-page .register-workspace .subtabs button.active { font-weight: 500; }
+
+/* Keep status, date and actions visible at 1440px; long names open in record drawers. */
+.pi-page .pi-rule-table { min-width: 1000px; }
+.pi-page .pi-document-table { min-width: 944px; }
+.pi-page :is(.pi-rule-table, .pi-document-table) :is(th, td) { padding: 12px 10px; vertical-align: middle; }
+.pi-page :is(.pi-rule-table, .pi-document-table) small { margin-top: 4px; font-weight: 400; }
+.pi-page .pi-rule-table th:first-child,
+.pi-page .pi-rule-table td:first-child { padding-inline: 8px; }
+.pi-page :is(.pi-rule-table, .pi-document-table) :is(th, td):last-child { z-index: 1; }
+.ph-page .demo-overdue-table { min-width: 1000px; }
+.ph-page .demo-overdue-table :is(th, td) { padding: 14px 10px; }
+.ph-page .demo-overdue-actions { justify-content: flex-start; gap: 4px; }
+.ph-page .demo-overdue-actions .ui-button { min-width: 34px; font-size: 12px; }
+
+/* Resource lists use the same comfortable density as the other record indexes. */
+.prototype-resources .rm-header h2 { line-height: 1.4; }
+.prototype-resources .rm-table td { padding-block: 12px; line-height: 20px; }
+.prototype-resources .rm-table-sub { margin-top: 4px; font-size: 12px; line-height: 18px; }
+.prototype-resources .rtm-record-list .rm-table { min-width: 920px; }
+.prototype-resources .rtm-record-list :is(th, td) { padding-inline: 12px; }
+.prototype-resources .rtm-record-list :is(th, td):last-child { z-index: 1; box-shadow: -1px 0 0 var(--border-default); }
+.prototype-resources .rtm-record-list th:last-child { background: #f6f9fc; }
+.prototype-resources .rtm-record-list .rm-table tbody tr { height: 64px; }
+.prototype-resources .rtm-record-list .rm-link { padding-block: 0; }
+.prototype-resources .settings-role-list .rm-table { min-width: 780px; }
+.prototype-resources .settings-role-list .rm-table td:nth-child(2) > span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.prototype-resources .rtm-category-list > button { min-height: 38px; font-size: 13px; }
+
+/* Ranking rows distribute down the chart card instead of leaving a blank lower half. */
+.analytics-grid > .section-card:has(.project-risk-list) { display: flex; flex-direction: column; }
+.analytics-grid .project-risk-list { flex: 1; display: grid; align-content: space-evenly; gap: 16px; padding-block: 12px; }
+
+@media (max-width: 1680px) {
+  .pi-page :is(.knowledge-tree, .rule-tree) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; padding: 16px 20px; }
+  .pi-page :is(.knowledge-tree, .rule-tree) > .section-card-head { margin-bottom: 4px; }
+  .pi-page :is(.knowledge-tree .tree-row, .rule-tree > button) { min-height: 36px; padding: 8px 10px; }
+  .pi-page .knowledge-tree .pi-category-note { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; margin: 4px 0 0; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+  .pi-page .knowledge-tree .pi-category-note .ui-button { min-height: 30px; padding: 0 8px; }
+}
+
+@media (max-width: 1600px) {
+  .prototype-resources .rm-record-page .rtm-workspace { grid-template-columns: minmax(0, 1fr); }
+  .prototype-resources .rm-record-page .rtm-library { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: center; }
+  .prototype-resources .rm-record-page .rtm-library > .rm-panel-head { min-height: 0; padding: 16px; border-bottom: 0; }
+  .prototype-resources .rm-record-page .rtm-category-list { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; padding: 12px; }
+  .prototype-resources .rm-record-page .rtm-category-list > button { display: flex; justify-content: space-between; gap: 4px; padding: 8px; font-size: 12px; white-space: nowrap; }
+  .prototype-resources .rm-record-page .rtm-category-list > button:first-child { grid-column: auto; }
+  .prototype-resources .rm-record-page .rtm-category-list > button > svg { display: none; }
+  .prototype-resources .rm-record-page .rtm-category-list > button > span { margin-left: 0; }
+}
+
+@media (min-width: 1700px) {
+  .ph-page .register-workspace .subtabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1280px) {
+  .ph-page .ph-overdue-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ph-page .ph-overdue-filters > .field:first-child { grid-column: auto; }
+  .ph-page .ph-overdue-filters > .ph-filter-actions { grid-column: 1 / -1; }
+  .ph-page .register-workspace { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+  .ph-page .register-workspace > :last-child { grid-column: 1 / -1; }
+  .prototype-resources .rm-record-page .rtm-library { grid-template-columns: minmax(0, 1fr); }
+  .prototype-resources .rm-record-page .rtm-library > .rm-panel-head { padding-bottom: 0; }
+}
+
+@media (max-width: 1000px) {
+  .ph-page :is(.ph-register-filters, .ph-overdue-filters) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ph-page .ph-overdue-filters > .field:first-child { grid-column: 1 / -1; }
+  .prototype-resources .rm-record-page .rtm-category-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .ph-page .register-workspace { grid-template-columns: minmax(0, 1fr); }
+  .pi-page :is(.knowledge-tree, .rule-tree) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .prototype-resources .rm-record-page .rtm-category-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

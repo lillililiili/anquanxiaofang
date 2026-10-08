@@ -1,0 +1,92 @@
+/* Only intelligence prototype components; preserve the established page grids. */
+.pi-page { min-width: 0; }
+.pi-page .modal { color: var(--text); }
+.pi-page .modal p, .pi-page .modal small { font-size: 13px; line-height: 1.7; }
+.pi-page .modal h3 { font-size: 15px; font-weight: 600; }
+.pi-page .modal .field, .pi-page .modal .form-grid { min-width: 0; }
+.pi-page .modal .form-grid .wide { grid-column: 1 / -1; }
+.pi-page .modal textarea { min-height: 86px; }
+.pi-page .modal input[type="file"] { padding: 9px; height: auto; max-width: 100%; }
+.pi-page .pi-details { margin: 12px; }
+.pi-page .modal .pi-details { margin: 12px 0; }
+.pi-details dt, .pi-details dd { margin: 0; font-size: 13px; line-height: 1.7; font-weight: 400; overflow-wrap: anywhere; min-width: 0; }
+.pi-details dt { color: var(--muted); }
+.pi-details dd { color: var(--text); }
+.pi-page .pi-cell { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+.pi-page .pi-document-table, .pi-page .pi-rule-table, .pi-page .pi-version-table { table-layout: fixed; width: 100%; }
+.pi-page .pi-rule-table { min-width: 1349px; }
+.pi-page .pi-version-table { min-width: 1135px; }
+.pi-page .data-table td { font-size: 13px; font-weight: 400; vertical-align: top; }
+.pi-page .pi-row-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 8px 0; }
+.pi-page .pi-row-menu button { padding: 7px 4px; border: 1px solid var(--line-soft); border-radius: 5px; background: var(--card-soft); color: var(--blue); font-size: 12px; white-space: nowrap; cursor: pointer; }
+.pi-page .rule-detail-form { padding: 0 14px 14px; }
+.pi-page .rule-detail-form .detail-actions { padding-inline: 0; }
+.pi-page input:disabled, .pi-page select:disabled, .pi-page textarea:disabled { opacity: 1; color: var(--text); background: var(--card-soft); cursor: default; }
+.pi-page .pi-error { padding: 10px 12px; color: #b42332; border: 1px solid #f1bdc4; background: #fff2f3; border-radius: 7px; font-size: 13px; }
+.pi-page .pi-note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.pi-page .pi-category-note { display: grid; gap: 7px; margin: 14px; color: var(--muted); font-size: 12px; }
+.pi-page .pi-category-note .ui-button { justify-content: flex-start; }
+.pi-page .pi-upload { display: grid; gap: 10px; margin: 0 0 16px; padding: 14px; border: 1px dashed var(--line); border-radius: 8px; background: var(--card-soft); }
+.pi-page .pi-upload p { margin: 0; color: var(--muted); }
+.pi-page .pi-upload > .ui-button { justify-self: start; }
+.pi-page .pi-choice-list { display: grid; gap: 10px; margin: 16px 0; }
+.pi-page .pi-choice-list > label { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.pi-page .pi-choice-list input { margin-top: 3px; }
+.pi-page .pi-choice-list span { font-size: 13px; line-height: 1.6; }
+.pi-page .pi-choice-list small { display: block; color: var(--muted); }
+.pi-page .pi-history { display: grid; gap: 10px; margin: 14px 0; max-height: 420px; overflow: auto; }
+.pi-page .pi-history > button { display: grid; gap: 6px; padding: 12px; text-align: left; color: var(--text); border: 1px solid var(--line); border-radius: 8px; background: var(--card-soft); font-size: 13px; cursor: pointer; }
+.pi-page .pi-history small { color: var(--muted); }
+.pi-page .pi-history > button:hover { border-color: var(--blue); }
+.pi-page .pi-basis-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; }
+.pi-page .pi-basis-card h3 { margin: 0 0 8px; line-height: 1.6; }
+.pi-page .pi-basis-card p { margin: 6px 0; }
+.pi-page .pi-basis-card small { display: block; }
+.pi-page .pi-basis-card .ui-button { margin-top: 10px; }
+.pi-page .pi-knowledge-titles { display: grid; gap: 5px; margin-top: 10px; font-size: 13px; line-height: 1.6; }
+.pi-page .pi-result { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card-soft); }
+.pi-page .pi-result h3 { margin: 0 0 8px; }
+.pi-page .pi-result p { margin: 0 0 8px; }
+.pi-page .pi-result .pi-details { margin: 0; }
+.pi-page .pi-evidence { display: block; width: 100%; max-height: 260px; object-fit: cover; border: 1px solid var(--line); border-radius: 8px; }
+.pi-page .pi-compare-table { width: 100%; min-width: 580px; table-layout: fixed; }
+.pi-page .pi-compare-table th:first-child { width: 100px; }
+.pi-page .pi-compare-table td { white-space: normal; overflow-wrap: anywhere; }
+.pi-page .pi-compare-table .pi-changed td { background: var(--blue-soft); }
+.pi-page .rule-test p, .pi-page .rule-test p b { font-size: 13px; font-weight: 400; }
+.pi-page .rule-test .field { margin: 0; }
+@media (max-width: 760px) { .pi-page .modal .form-grid { grid-template-columns: minmax(0, 1fr); } .pi-page .pi-details { grid-template-columns: 84px minmax(0, 1fr); } }
+
+/* Record indexes keep their details and history behind an explicit row action. */
+.pi-page .demo-knowledge-layout, .pi-page .rules-complete-layout { grid-template-columns: 210px minmax(0, 1fr); gap: 16px; }
+.pi-page .pi-record-link { max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--blue); font-size: 13px; line-height: 1.6; font-weight: 400; text-align: left; }
+.pi-page .pi-record-link:hover { text-decoration: underline; }
+.pi-page .pi-list-actions { display: flex; align-items: center; gap: 8px; }
+.pi-page :is(.pi-rule-table, .pi-document-table) :is(th, td):last-child { position: sticky; right: 0; background: var(--card); box-shadow: -5px 0 8px rgb(20 50 60 / 4%); }
+.pi-page :is(.pi-rule-table, .pi-document-table) th:last-child { background: var(--card-soft); }
+.pi-page .pi-record-drawer .prototype-drawer { width: min(1080px, calc(100vw - 64px)); max-width: none; padding: 0; background: var(--card); }
+.pi-page .pi-record-drawer .drawer-head { position: sticky; z-index: 2; top: 0; margin: 0; padding: 18px 24px; background: var(--card); border-bottom: 1px solid var(--line); }
+.pi-page .pi-record-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 24px 16px; }
+.pi-record-heading > div { min-width: 0; }
+.pi-page .pi-record-heading h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.pi-page .pi-record-heading p { margin: 0; font-size: 13px; color: var(--muted); }
+.pi-page .pi-record-heading > .status-pill { flex-shrink: 0; align-self: flex-start; }
+.pi-page .pi-record-tabs { display: flex; gap: 24px; padding: 0 24px; border-bottom: 1px solid var(--line); }
+.pi-page .pi-record-tabs button { display: flex; align-items: center; gap: 8px; padding: 12px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 13px; }
+.pi-page .pi-record-tabs button.active { border-bottom-color: var(--blue); color: var(--blue); font-weight: 600; }
+.pi-page .pi-record-tabs button span { padding: 2px 6px; border-radius: 4px; color: var(--blue); background: var(--blue-soft); font-size: 12px; font-weight: 400; }
+.pi-page .pi-record-tabs button:disabled { opacity: .5; cursor: not-allowed; }
+.pi-page .pi-record-body { min-width: 0; padding: 24px; }
+.pi-page .pi-record-body .pi-details { margin: 0; grid-template-columns: 124px minmax(0, 1fr); padding: 20px; gap: 14px 18px; }
+.pi-page .pi-record-body .detail-actions { padding: 18px 0 0; margin-top: 20px; }
+.pi-page .pi-record-body .detail-actions .ui-button { flex: 0 1 auto; }
+.pi-page .pi-record-body .pi-version-table { min-width: 880px; }
+.pi-page .pi-record-body .section-card { padding: 0; border: 0; box-shadow: none; }
+.pi-page .pi-record-body .form-grid .field.wide { grid-column: 1 / -1; }
+.pi-page .pi-record-body :is(input, select, textarea) { font-size: 13px; font-weight: 400; }
+.pi-page .pi-rule-editor .check-line { font-size: 13px; }
+.pi-page .pi-record-body .detail-copy { margin: 16px 0; font-size: 13px; line-height: 1.8; }
+.pi-page .pi-record-body .tag-list { padding: 0; }
+@media (max-width: 1680px) {
+  .pi-page .demo-knowledge-layout, .pi-page .rules-complete-layout { grid-template-columns: minmax(0, 1fr); }
+}

@@ -1,0 +1,294 @@
+/* Specialty workspaces share the application palette; media canvases stay dark. */
+.tech-blue-theme .model-center-page,
+.tech-blue-theme .mc-page,
+.tech-blue-theme .helmet-terminal-page {
+  color: var(--text-primary);
+  background: var(--surface-page);
+}
+
+.tech-blue-theme :is(.model-metric-card, .model-card, .model-quoted-note, .mc-card, .mc-stat-grid article, .mc-filterbar, .helmet-panel, .helmet-video-panel, .helmet-table-panel) {
+  border-color: var(--border-default);
+  box-shadow: 0 3px 12px rgba(28, 51, 77, 0.035);
+}
+
+.tech-blue-theme :is(.model-topbar, .helmet-live-header) {
+  background: var(--surface-card);
+  border-color: var(--border-default);
+  box-shadow: none;
+}
+
+.tech-blue-theme :is(.model-title-block h1, .helmet-title-mark strong) {
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.tech-blue-theme :is(.model-card h2, .helmet-panel h3, .helmet-video-panel h2, .helmet-table-panel h3, .graph-left h3, .graph-right h3, .rule-tree h3, .mc-modal h3) {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.tech-blue-theme :is(.model-card h2 svg, .mc-card h3 svg, .helmet-title-mark svg) {
+  color: var(--accent-blue);
+}
+
+.tech-blue-theme :is(.model-metric-card > span, .mc-stat-grid svg) {
+  color: var(--accent-blue);
+  background: var(--surface-accent);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+}
+
+.tech-blue-theme :is(.model-metric-card p, .model-metric-card b, .model-kb-list b, .model-rule-list b, .model-modal-list b, .graph-left button, .rule-tree button, .graph-canvas-card footer span) {
+  font-weight: 500;
+}
+
+.tech-blue-theme :is(.model-metric-card p, .model-metric-card small) {
+  color: var(--text-secondary-dark);
+}
+
+.tech-blue-theme .model-metric-card strong {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.tech-blue-theme :is(.model-search-box button, .model-top-actions > button, .model-card header button, .model-table-scroll button) {
+  border-color: var(--border-default);
+  font-weight: 500;
+}
+
+.tech-blue-theme .model-search-box button {
+  border-color: var(--button-blue);
+}
+
+.tech-blue-theme .model-table-scroll button {
+  color: var(--accent-blue);
+  background: var(--surface-accent);
+}
+
+.tech-blue-theme :is(.model-top-actions > button i, .mc-topbar em) {
+  background: var(--risk-red-text);
+}
+
+.tech-blue-theme :is(.model-table-scroll th, .helmet-table-wrap th) {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tech-blue-theme :is(.model-table-scroll td, .helmet-table-wrap td, .graph-right p, .model-modal-list p, .model-basis-modal p) {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.tech-blue-theme :is(.model-table-scroll tr:hover td, .mc-table-wrap tr:hover td, .helmet-table-wrap tr:hover td) {
+  background: var(--surface-raised);
+}
+
+.tech-blue-theme :is(.mc-table-wrap tr.selected td, .helmet-table-wrap tr.active td) {
+  background: var(--surface-accent);
+}
+
+.tech-blue-theme :is(.graph-node, .graph-right p button, .rule-detail-form label:not(.mc-field), .mc-topbar button, .mc-modal .upload-box, .mc-page .advanced-filter) {
+  font-weight: 500;
+}
+
+.tech-blue-theme .mc-modal header button {
+  color: var(--text-secondary-dark);
+}
+
+.tech-blue-theme .mc-modal .upload-box {
+  border-color: var(--border-strong);
+}
+
+/* Fine grids and restrained node colors give the knowledge canvas a technical character. */
+.tech-blue-theme :is(.model-graph-visual, .graph-canvas, .graph-full-preview) {
+  background-color: var(--surface-raised);
+  background-image: radial-gradient(circle, rgba(55, 107, 154, 0.16) 0.75px, transparent 0.75px);
+  background-size: 16px 16px;
+}
+
+.tech-blue-theme .model-graph-visual::before {
+  border-color: var(--border-strong);
+}
+
+.tech-blue-theme :is(.model-graph-visual strong, .graph-node.center) {
+  color: #fff;
+  background: var(--risk-red-text);
+  border-color: var(--risk-red-text);
+  font-weight: 600;
+}
+
+.tech-blue-theme .model-graph-visual .node {
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  color: var(--accent-blue);
+  background: var(--surface-accent);
+}
+
+.tech-blue-theme :is(.model-graph-visual .node-0, .model-graph-visual .node-1, .graph-node.risk) {
+  color: var(--risk-orange-text);
+  background: var(--risk-orange-bg);
+  border-color: var(--risk-orange-border);
+}
+
+.tech-blue-theme :is(.model-graph-visual .node-2, .graph-node.action, .graph-node.basis) {
+  color: var(--risk-green-text);
+  background: var(--risk-green-bg);
+  border-color: var(--risk-green-border);
+}
+
+.tech-blue-theme :is(.model-graph-visual .node-4, .graph-node.factor) {
+  color: #6b6389;
+  background: #f1eff7;
+  border-color: #cec8de;
+}
+
+.tech-blue-theme .graph-node:not(.center):not(.risk):not(.factor):not(.action):not(.basis) {
+  color: var(--accent-blue);
+  background: var(--surface-accent);
+  border-color: var(--border-strong);
+}
+
+.tech-blue-theme .graph-canvas line {
+  stroke: var(--border-strong);
+}
+
+.tech-blue-theme .graph-canvas line.active {
+  stroke: var(--accent-blue);
+}
+
+.tech-blue-theme .graph-node.active {
+  box-shadow: 0 0 0 5px rgba(55, 107, 154, 0.13);
+}
+
+.tech-blue-theme .risk-hint strong {
+  color: var(--risk-red-text);
+}
+
+/* Helmet controls use the same light work surface as the expert workspace. */
+.tech-blue-theme .helmet-title-mark,
+.tech-blue-theme .helmet-task-meta b {
+  color: var(--text-primary);
+}
+
+.tech-blue-theme .helmet-task-meta {
+  color: var(--text-secondary-dark);
+}
+
+.tech-blue-theme :is(.helmet-phase, .helmet-connect-dot, .helmet-battery, .helmet-device-select, .helmet-header-actions button) {
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+}
+
+.tech-blue-theme .helmet-device-select select {
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.tech-blue-theme :is(.helmet-connect-dot, .helmet-battery svg, .helmet-sensor-list b.green) {
+  color: var(--risk-green-text);
+}
+
+.tech-blue-theme .helmet-connect-dot::before,
+.tech-blue-theme .helmet-signal-bars i,
+.tech-blue-theme .helmet-meter.green em,
+.tech-blue-theme .helmet-timeline-legend .normal::before,
+.tech-blue-theme .helmet-timebar .normal,
+.tech-blue-theme .mini-live-dot::before,
+.tech-blue-theme .live-pill::before {
+  background: var(--risk-green-text);
+  box-shadow: none;
+}
+
+.tech-blue-theme .helmet-meter.orange em {
+  background: var(--risk-orange-text);
+}
+
+.tech-blue-theme :is(.helmet-meter.red em, .helmet-timebar .abnormal) {
+  background: var(--risk-red-text);
+}
+
+.tech-blue-theme .helmet-timeline-legend .abnormal::before {
+  background: var(--risk-red-text);
+}
+
+.tech-blue-theme .helmet-sensor-list b.orange { color: var(--risk-orange-text); }
+.tech-blue-theme :is(.helmet-sensor-list b.red, .helmet-suspect-list .suspect-dot) { color: var(--risk-red-text); }
+.tech-blue-theme .helmet-sensor-list b.blue { color: var(--accent-blue); }
+.tech-blue-theme .helmet-timeline-legend .current::before,
+.tech-blue-theme .helmet-timebar .current { background: var(--accent-blue); }
+.tech-blue-theme .helmet-timebar b::after { border-color: var(--accent-blue); }
+
+.tech-blue-theme :is(.helmet-panel > header, .helmet-video-panel > header, .helmet-table-panel > header) {
+  background: var(--surface-card);
+  border-color: var(--border-default);
+}
+
+.tech-blue-theme :is(.helmet-panel, .helmet-video-panel, .helmet-table-panel) {
+  background: var(--surface-card);
+}
+
+.tech-blue-theme :is(.helmet-panel h3 small, .helmet-table-panel h3 small, .helmet-status-row b, .helmet-sensor-list b, .helmet-connect-dot, .helmet-task-meta b, .mini-live-dot, .live-pill, .timeline-summary, .helmet-suspect-list strong, .helmet-checklist i, .helmet-retake-card b, .helmet-model-proof b) {
+  font-weight: 500;
+}
+
+.tech-blue-theme :is(.helmet-quick-grid button, .helmet-table-panel button, .helmet-text-btn, .helmet-retake-card button) {
+  border-color: var(--border-strong);
+  font-weight: 500;
+}
+
+.tech-blue-theme :is(.helmet-quick-grid button.active, .helmet-retake-card button) {
+  border-color: var(--button-blue);
+}
+
+.tech-blue-theme .helmet-quick-grid .sos {
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
+  border-color: var(--risk-red-border);
+}
+
+.tech-blue-theme .helmet-model-proof {
+  border-color: var(--risk-green-border);
+}
+
+.tech-blue-theme .helmet-model-proof.warn { border-color: var(--risk-orange-border); }
+.tech-blue-theme .helmet-model-proof.mock { border-color: var(--border-default); }
+.tech-blue-theme .helmet-model-proof strong { font-weight: 600; }
+
+.tech-blue-theme .helmet-retake-card.active {
+  border-color: var(--accent-blue);
+  box-shadow: inset 0 0 0 1px var(--accent-blue);
+}
+
+.tech-blue-theme .helmet-terminal-page button:hover {
+  border-color: var(--accent-blue);
+}
+
+/* Preserve legibility over live images and in the video control bar. */
+.tech-blue-theme .helmet-video-toolbar,
+.tech-blue-theme .helmet-more-menu {
+  color: #e6eef7;
+  background: var(--surface-nav);
+  border-color: #344c65;
+}
+
+.tech-blue-theme .helmet-video-toolbar button {
+  color: #e6eef7;
+  border-color: #344c65;
+  font-weight: 500;
+}
+
+.tech-blue-theme .helmet-video-toolbar button.active {
+  color: #fff;
+  background: var(--button-blue);
+}
+
+.tech-blue-theme .helmet-video-toolbar button.active.danger {
+  background: var(--risk-red-text);
+}
+
+.tech-blue-theme .helmet-ai-box.active {
+  box-shadow: 0 0 0 3px rgba(128, 165, 200, 0.8);
+}

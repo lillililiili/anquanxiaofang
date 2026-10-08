@@ -1,0 +1,164 @@
+/* Shared semantic palette. Loaded after the page styles. */
+:root {
+  color-scheme: dark;
+  --surface-page: #0b1830;
+  --surface-card: #122440;
+  --surface-raised: #192e4b;
+  --surface-nav: #0c1b33;
+  --surface-accent: #183b63;
+  --surface-accent-strong: #205080;
+  --border-default: #243d5e;
+  --border-strong: #365779;
+  --text-primary: #deebfa;
+  --text-secondary-dark: #9ab0cc;
+  --text-subtle: #839bb9;
+  --accent-blue: #5aa8ff;
+  --button-blue: #1a6fdb;
+  --button-blue-hover: #2265bb;
+  --risk-red-text: #ff8787;
+  --risk-red-bg: #442639;
+  --risk-red-border: #794354;
+  --risk-orange-text: #ffbc79;
+  --risk-orange-bg: #493828;
+  --risk-orange-border: #795a3d;
+  --risk-green-text: #6ee3ae;
+  --risk-green-bg: #1d463f;
+  --risk-green-border: #357461;
+  --shadow: 0 12px 28px rgba(2, 10, 25, 0.22);
+  --nav: var(--surface-nav);
+  --nav-deep: #08162a;
+  --bg: var(--surface-page);
+  --card: var(--surface-card);
+  --line: var(--border-default);
+  --line-soft: #203752;
+  --text: var(--text-primary);
+  --muted: var(--text-secondary-dark);
+  --blue: var(--accent-blue);
+  --green: var(--risk-green-text);
+  --orange: var(--risk-orange-text);
+  --yellow: #ffd276;
+  --red: var(--risk-red-text);
+  --layout-page-bg: var(--surface-page);
+  --layout-card-bg: var(--surface-card);
+  --layout-border: var(--border-default);
+  --layout-text-main: var(--text-primary);
+  --layout-text-secondary: var(--text-secondary-dark);
+  --layout-text-muted: var(--text-subtle);
+  --layout-primary-blue: var(--button-blue);
+  --layout-primary-blue-hover: var(--button-blue-hover);
+  --layout-shadow: var(--shadow);
+  --text-title: var(--text-primary);
+  --text-main: var(--text-primary);
+  --text-secondary: var(--text-secondary-dark);
+  --text-muted: var(--text-subtle);
+  --text-placeholder: #8299b7;
+  --primary-blue: var(--accent-blue);
+  --primary-blue-hover: #83bdff;
+  --border-color: var(--border-default);
+  --page-bg: var(--surface-page);
+  --card-bg: var(--surface-card);
+}
+
+html, body, #root { background: var(--surface-page); }
+body { color: var(--text-primary); }
+::selection { background: #316aa4; color: #fff; }
+
+:is(.primary-btn, .btn-primary, .model-search-box button, .model-table-scroll button) {
+  color: #fff;
+  background: var(--button-blue);
+  border-color: var(--button-blue);
+}
+:is(.primary-btn, .btn-primary, .model-search-box button, .model-table-scroll button):hover {
+  background: var(--button-blue-hover);
+  border-color: var(--button-blue-hover);
+}
+:is(.secondary-btn, .btn-secondary) {
+  color: var(--accent-blue);
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+/* Native form controls, including date and time pickers. */
+.workbench-shell :is(input, select, textarea),
+.model-center-page :is(input, select, textarea),
+.mc-page :is(input, select, textarea) {
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--surface-raised);
+  border-color: var(--border-default);
+}
+.workbench-shell :is(input, textarea)::placeholder,
+.model-center-page :is(input, textarea)::placeholder,
+.mc-page :is(input, textarea)::placeholder { color: var(--text-subtle); }
+
+/* Risk and status colours remain distinct from navigation blue. */
+:is(.badge, .mc-badge, .tag-danger, .tag-risk-high).danger,
+.tag-danger, .tag-risk-high,
+.badge.danger, .mc-badge.danger {
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
+  border-color: var(--risk-red-border);
+}
+.tag-warning, .tag-risk-medium,
+.badge.warning, .mc-badge.warning {
+  color: var(--risk-orange-text);
+  background: var(--risk-orange-bg);
+  border-color: var(--risk-orange-border);
+}
+.tag-success, .tag-risk-low,
+.badge.success, .mc-badge.success {
+  color: var(--risk-green-text);
+  background: var(--risk-green-bg);
+  border-color: var(--risk-green-border);
+}
+.tag-info, .badge.running {
+  color: #9bcaff;
+  background: var(--surface-accent);
+  border-color: #346795;
+}
+.badge.muted, .mc-badge.muted {
+  color: var(--text-secondary-dark);
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+}
+
+/* Tables retain the mandated lightweight 13px body. */
+:is(.data-table, .action-table, .layout-data-table, .mc-table-wrap, .helmet-table-wrap, .model-table-scroll) td {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 400;
+}
+:is(.data-table, .action-table, .layout-data-table, .mc-table-wrap, .helmet-table-wrap, .model-table-scroll) th {
+  color: var(--text-secondary-dark);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--surface-raised);
+}
+:is(.data-table, .action-table, .layout-data-table, .mc-table-wrap, .helmet-table-wrap, .model-table-scroll) tbody tr:hover td {
+  background: #1c3858;
+}
+
+/* Shared maps appear on both the overview and project management pages. */
+.shandong-map .province { fill: #13385c; stroke: #3479b5; }
+.shandong-map .county { fill: #1b456b; stroke: #3472a2; }
+.shandong-map .county:is(.c2, .c5, .c8) { fill: #205580; }
+.risk-point b, .project-pin { color: #14233a; border-color: #8aa7c8; }
+.editable-tags > button, .ai-suggestion-card > header > button {
+  padding: 6px 10px;
+  color: var(--accent-blue);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.editable-tags > button:hover, .ai-suggestion-card > header > button:hover {
+  background: var(--surface-accent);
+}
+
+/* The preview image is a scanned report page, so retain white paper. */
+.report-preview-card img { background: #fff; }
+@media print {
+  :root { color-scheme: light; }
+  html, body, #root { color: #172033; background: #fff; }
+  .report-preview-card { color: #172033; background: #fff; box-shadow: none; }
+}

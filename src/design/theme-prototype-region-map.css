@@ -1,0 +1,45 @@
+.region-risk-card { display: flex; flex-direction: column; container-type: inline-size; }
+.region-risk-card .section-card-head { align-items: center; margin-bottom: 12px; gap: 12px; }
+.region-risk-card h2 { font-size: 16px; font-weight: 600; }
+.region-demo-label { flex-shrink: 0; padding: 3px 7px; color: var(--muted); background: var(--card-soft); border: 1px solid var(--line); border-radius: 5px; font-size: 11px; }
+.region-map-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.region-map-toolbar p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.region-map-toolbar p strong { color: var(--text); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.region-map-toolbar p > span { margin: 0 7px; color: var(--line); }
+.region-metric-switch { display: flex; flex-shrink: 0; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: var(--card-soft); }
+.region-metric-switch button { min-height: 28px; padding: 0 8px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; font-size: 12px; }
+.region-metric-switch button[aria-pressed="true"] { color: #2563a5; background: var(--card); box-shadow: 0 1px 4px #173d4d12; }
+.region-map-canvas { display: grid; place-items: center; flex: 1; margin: 12px 0; border: 1px solid var(--line-soft); border-radius: 9px; background: linear-gradient(135deg, #f8fbfb, #f1f6f7); overflow: hidden; }
+.region-map-canvas svg { display: block; width: 100%; min-height: 235px; max-height: 330px; overflow: visible; }
+.region-city { cursor: pointer; stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; transition: fill 140ms ease; }
+.region-city:hover { stroke: #436b7d; stroke-width: 1.8; filter: brightness(.96); }
+.region-city.is-selected { stroke: #216477; stroke-width: 2.2; stroke-linejoin: round; }
+.region-city:focus { outline: none; }
+.region-city:focus-visible { outline: none; stroke: #164bb0; stroke-width: 3; }
+.region-map-labels { pointer-events: none; fill: #304b54; font-size: 16px; font-weight: 500; }
+.region-map-count { font-size: 13px; font-weight: 400; }
+.region-map-labels .no-data { fill: #85989f; font-weight: 400; }
+.region-map-labels .on-dark { fill: #fff; }
+.region-sea-label { fill: #afc2c8; font-size: 12px; letter-spacing: 5px; }
+.region-map-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px 14px; color: var(--muted); font-size: 11px; }
+.region-map-legend > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.region-map-legend i { display: inline-block; width: 12px; height: 9px; border-radius: 2px; }
+.region-no-data-key { background: #e5ecef; border: 1px solid #d9e2e5; }
+.region-map-detail { display: flex; align-items: center; gap: 12px; min-height: 66px; margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-soft); }
+.region-city-picker { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--blue); }
+.region-city-picker select { width: 90px; min-height: 30px; height: 30px; padding: 0 3px; border: 0; border-radius: 4px; background: transparent; color: var(--text); font-size: 13px; font-weight: 500; }
+.region-selected-risk { padding: 3px 7px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
+.region-selected-count { margin-left: auto; color: var(--muted); font-size: 12px; text-align: right; }
+.region-selected-count strong { margin-right: 3px; color: var(--text); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.region-selected-count > span { display: block; margin-top: 1px; font-size: 11px; }
+.region-empty-detail { margin-left: auto; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.region-map-note { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.analytics-grid > .section-card:has(.donut-wrap.large) { display: flex; flex-direction: column; }
+.analytics-grid > .section-card > .donut-wrap.large { flex: 1; }
+@container (max-width: 460px) {
+  .region-map-toolbar { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .region-map-canvas svg { min-height: 210px; }
+  .region-map-detail { gap: 8px; padding: 8px; }
+  .region-map-legend { gap: 6px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .region-city { transition: none; } }

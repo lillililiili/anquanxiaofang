@@ -15,6 +15,7 @@ training/yolo26/.generated-dataset.yaml
 server/models/*-backup-*.txt
 
 node_modules/
+.playwright-cli/
 dist/
 *.tsbuildinfo
 __pycache__/

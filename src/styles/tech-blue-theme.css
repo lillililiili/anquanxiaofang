@@ -1,0 +1,189 @@
+/* Shared technology-blue palette for every route and native control. */
+:root {
+  color-scheme: light;
+  --surface-page: #eef2f6;
+  --surface-card: #ffffff;
+  --surface-raised: #f5f7fa;
+  --surface-nav: #14283f;
+  --surface-accent: #eaf0f7;
+  --surface-accent-strong: #dce7f2;
+  --border-default: #dce3eb;
+  --border-strong: #bfcedd;
+  --text-primary: #34465b;
+  --text-secondary-dark: #66788c;
+  --text-subtle: #75869a;
+  --accent-blue: #376b9a;
+  --button-blue: #356b9b;
+  --button-blue-hover: #29587f;
+  --risk-red-text: #b4434e;
+  --risk-red-bg: #fcf0f1;
+  --risk-red-border: #efcdd1;
+  --risk-orange-text: #965c21;
+  --risk-orange-bg: #fff5e8;
+  --risk-orange-border: #edd8b9;
+  --risk-green-text: #24745f;
+  --risk-green-bg: #edf7f3;
+  --risk-green-border: #c3e2d6;
+  --shadow: 0 2px 8px rgba(28, 52, 78, 0.035);
+  --nav: var(--surface-nav);
+  --nav-deep: #102236;
+  --bg: var(--surface-page);
+  --card: var(--surface-card);
+  --line: var(--border-default);
+  --line-soft: #e9eef3;
+  --text: var(--text-primary);
+  --muted: var(--text-secondary-dark);
+  --blue: var(--accent-blue);
+  --green: var(--risk-green-text);
+  --orange: var(--risk-orange-text);
+  --yellow: #b08b35;
+  --red: var(--risk-red-text);
+  --layout-page-bg: var(--surface-page);
+  --layout-card-bg: var(--surface-card);
+  --layout-border: var(--border-default);
+  --layout-text-main: var(--text-primary);
+  --layout-text-secondary: var(--text-secondary-dark);
+  --layout-text-muted: var(--text-subtle);
+  --layout-primary-blue: var(--button-blue);
+  --layout-primary-blue-hover: var(--button-blue-hover);
+  --layout-shadow: var(--shadow);
+  --text-title: var(--text-primary);
+  --text-main: var(--text-primary);
+  --text-secondary: var(--text-secondary-dark);
+  --text-muted: var(--text-subtle);
+  --text-placeholder: #8694a5;
+  --primary-blue: var(--button-blue);
+  --primary-blue-hover: #29587f;
+  --border-color: var(--border-default);
+  --page-bg: var(--surface-page);
+  --card-bg: var(--surface-card);
+}
+
+html, body, #root { background: var(--surface-page); }
+body { color: var(--text-primary); }
+::selection { background: #356b9b; color: #fff; }
+
+:is(.primary-btn, .btn-primary, .model-search-box button, .model-table-scroll button) {
+  color: #fff;
+  background: var(--button-blue);
+  border-color: var(--button-blue);
+}
+:is(.primary-btn, .btn-primary, .model-search-box button, .model-table-scroll button):hover {
+  background: var(--button-blue-hover);
+  border-color: var(--button-blue-hover);
+}
+:is(.secondary-btn, .btn-secondary) {
+  color: var(--accent-blue);
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+/* Native form controls, including date and time pickers. */
+.workbench-shell :is(input, select, textarea),
+.model-center-page :is(input, select, textarea),
+.mc-page :is(input, select, textarea) {
+  color-scheme: light;
+  color: var(--text-primary);
+  background-color: var(--surface-raised);
+  border-color: var(--border-default);
+}
+.workbench-shell :is(input, textarea)::placeholder,
+.model-center-page :is(input, textarea)::placeholder,
+.mc-page :is(input, textarea)::placeholder { color: var(--text-subtle); }
+
+/* Risk and status colours remain distinct from navigation blue. */
+:is(.badge, .mc-badge, .tag-danger, .tag-risk-high).danger,
+.tag-danger, .tag-risk-high,
+.badge.danger, .mc-badge.danger {
+  color: var(--risk-red-text);
+  background: var(--risk-red-bg);
+  border-color: var(--risk-red-border);
+}
+.tag-warning, .tag-risk-medium,
+.badge.warning, .mc-badge.warning {
+  color: var(--risk-orange-text);
+  background: var(--risk-orange-bg);
+  border-color: var(--risk-orange-border);
+}
+.tag-success, .tag-risk-low,
+.badge.success, .mc-badge.success {
+  color: var(--risk-green-text);
+  background: var(--risk-green-bg);
+  border-color: var(--risk-green-border);
+}
+.tag-info, .badge.running {
+  color: var(--accent-blue);
+  background: var(--surface-accent);
+  border-color: var(--border-strong);
+}
+.badge.muted, .mc-badge.muted {
+  color: var(--text-secondary-dark);
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+}
+
+/* Tables retain the mandated lightweight 13px body. */
+:is(.data-table, .action-table, .layout-data-table, .mc-table-wrap, .helmet-table-wrap, .model-table-scroll) td {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 400;
+}
+:is(.data-table, .action-table, .layout-data-table, .mc-table-wrap, .helmet-table-wrap, .model-table-scroll) th {
+  color: var(--text-secondary-dark);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--surface-raised);
+}
+:is(.data-table, .action-table, .layout-data-table, .mc-table-wrap, .helmet-table-wrap, .model-table-scroll) tbody tr:hover td {
+  background: var(--surface-accent);
+}
+
+/* Shared maps appear on both the overview and project management pages. */
+.shandong-map .province { fill: #e4edf5; stroke: #89a7c2; }
+.shandong-map .county { fill: #d4e3ef; stroke: #94afc7; }
+.shandong-map .county:is(.c2, .c5, .c8) { fill: #bbd2e4; }
+.risk-point b, .project-pin { color: #fff; border-color: #8aa7c8; }
+.risk-point.yellow b { color: #34465b; }
+.editable-tags > button, .ai-suggestion-card > header > button {
+  padding: 6px 10px;
+  color: var(--accent-blue);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.editable-tags > button:hover, .ai-suggestion-card > header > button:hover {
+  background: var(--surface-accent);
+}
+
+/* The preview image is a scanned report page, so retain white paper. */
+.report-preview-card img { background: #fff; }
+
+/* Shared details, filters and feedback on the original inspection routes. */
+.tech-blue-theme .sidebar nav .subnav button { min-height: 32px !important; font-size: 12px !important; }
+.tech-blue-theme .sidebar nav .subnav button.sub-active { background: #213d56 !important; color: #c3d9ea; }
+.tech-blue-theme :is(input, select, textarea) { accent-color: var(--button-blue); }
+.tech-blue-theme :is(.multi-filter-card, .multi-card, .module-list-card, .module-detail-card, .dashboard-card, .modal-card, .mc-card) { border-radius: 6px; }
+.tech-blue-theme .multi-filter-card :is(.select-box, .date-box) { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 7px; font-size: 12px; color: var(--text-secondary-dark); }
+.tech-blue-theme .multi-filter-card :is(input, select) { width: 100%; min-width: 0; }
+.tech-blue-theme :is(.multi-card h3, .module-detail-card h3, .dashboard-card h3) { font-size: 16px; font-weight: 600; }
+.tech-blue-theme :is(.clue-card-main, .clue-card-main strong, .clue-card-main b, .rectify-ledger-list strong) { font-size: 13px; font-weight: 500; }
+.tech-blue-theme .clue-card-main { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+.tech-blue-theme .clue-card-meta { grid-template-columns: minmax(0, 1fr); font-size: 12px; gap: 5px; }
+.tech-blue-theme .clue-list-card .badge { grid-row: 1; align-self: start; }
+.tech-blue-theme :is(.multi-kpi-grid span, .multi-kpi-grid small) { color: var(--text-secondary-dark); font-weight: 400; }
+.tech-blue-theme .multi-kpi-grid strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tech-blue-theme .ai-suggestion { color: var(--text-primary); background: var(--risk-green-bg); border-color: var(--risk-green-border); }
+.tech-blue-theme .risk-choice .active { color: var(--risk-red-text); border-color: var(--risk-red-border); }
+.tech-blue-theme :is(.chip-input button, .tag-cloud button) { color: var(--risk-orange-text); border-color: var(--risk-orange-border); }
+.tech-blue-theme :is(.upload-box, .rectify-photo-strip .active img) { border-color: var(--border-strong); outline-color: var(--accent-blue); }
+.tech-blue-theme :is(.media-evidence-grid button.active, .evidence-thumbs button.active) { border-color: var(--accent-blue); box-shadow: inset 0 0 0 1px var(--accent-blue); }
+.tech-blue-theme :is(.rectify-tab-row .active, .archive-tabs .active) { border-bottom-color: var(--accent-blue); }
+.tech-blue-theme .modal-card { color: var(--text-primary); background: var(--surface-card); border-color: var(--border-default); box-shadow: 0 20px 64px #14283f33; }
+.tech-blue-theme .modal-card > header { background: var(--surface-raised); }
+.tech-blue-theme .toast { color: var(--text-primary); background: var(--surface-card); border: 1px solid var(--border-strong); box-shadow: 0 4px 20px #14283f15; }
+@media print {
+  :root { color-scheme: light; }
+  html, body, #root { color: #172033; background: #fff; }
+  .report-preview-card { color: #172033; background: #fff; box-shadow: none; }
+}

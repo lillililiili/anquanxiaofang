@@ -2,12 +2,15 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS === "true" ? "/anquanxiaofang/" : "/",
   plugins: [react()],
   build: {
     rollupOptions: {
       input: {
         app: "index.html",
-        design: "design-preview.html"
+        design: "design-preview.html",
+        visual: "visual-preview.html",
+        themePrototype: "theme-prototype.html"
       }
     }
   },

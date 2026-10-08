@@ -138,13 +138,13 @@
 .layout-data-table th {
   height: 40px;
   color: var(--layout-text-secondary);
-  background: #f6f8fb;
+  background: var(--surface-raised);
   font-weight: 600;
 }
 
 .layout-data-table td {
   height: 42px;
-  border-bottom: 1px solid #edf0f5;
+  border-bottom: 1px solid var(--border-default);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
