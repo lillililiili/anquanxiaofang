@@ -27,16 +27,16 @@ import "./VisualPreview.css";
 type PreviewPage = "login" | "dashboard" | "hazards" | "devices" | "reports" | "analytics" | "knowledge";
 
 const assets = {
-  mark: "/brand/brand-mark.png",
+  mark: "/brand/brand-mark-v2.png",
   markLight: "/brand/brand-mark-light.png",
-  hero: "/ui-backgrounds/login-hero.png",
+  hero: "/ui-backgrounds/login-hero-v2.png",
   dashboard: "/ui-backgrounds/dashboard-atmosphere.png",
   hazard: "/ui-backgrounds/hazard-amber.png",
   helmet: "/ui-backgrounds/helmet-field.png",
   report: "/ui-backgrounds/report-evidence.png",
   park: "/ui-backgrounds/park-overview.png",
   knowledge: "/ui-backgrounds/knowledge-grid.png",
-  texture: "/ui-backgrounds/card-texture.png"
+  texture: "/ui-backgrounds/card-texture-v2.png"
 } as const;
 
 const pageMeta: Record<PreviewPage, { label: string; eyebrow: string; description: string; icon: ElementType }> = {

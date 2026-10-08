@@ -1,4 +1,5 @@
-﻿import {
+import { sceneImages, sceneVideos, rectificationPhotos, getMediaSourceNote, getHazardScene } from "./data/demoSceneMedia";
+import {
   BatteryMedium,
   Bell,
   BookOpen,
@@ -44,7 +45,7 @@
   Wifi,
   Wrench
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   chatMessages as expertChatMessages,
   expertReviewRecords,
@@ -60,7 +61,6 @@ import {
   type ExpertVideoChannel
 } from "./data/expertMockData";
 import {
-  openHelmetStream,
   sendRetakeInstruction,
   sendTalkbackAudio,
   startWebrtcCall,
@@ -68,7 +68,12 @@ import {
   stopWebrtcCall
 } from "./services/expertDeviceAdapter";
 import { ExpertRulesPage, HazardGraphPage, KnowledgePage } from "./pages/ModelCenterPages";
+import ResourceModules from "./features/resources/ResourceModules";
+import OperationsModules, { type OperationsPage } from "./features/operations/OperationsModules";
+import type { ResourceTarget } from "./features/resources/resourceTypes";
 import {
+  Area,
+  CartesianGrid,
   Cell,
   Legend,
   Line,
@@ -105,7 +110,7 @@ type HazardView = "registration" | "rectification" | "statistics" | "overdue";
 type DetailTab = "basic" | "projects" | "contracts" | "attachments";
 type Option = { label: string; value: string };
 type MediaKind = "image" | "video" | "audio";
-type MediaPreview = { title: string; type: MediaKind; src: string; transcript?: string };
+type MediaPreview = { title: string; type: MediaKind; src: string; transcript?: string; caption?: string };
 
 type ApiResponse<T> = { success: boolean; message?: string; data: T };
 
@@ -129,31 +134,15 @@ type Customer = {
 
 const demoMedia = {
   images: {
-    cableExposed: "/demo-media/images/evidence_cable_exposed.jpg",
-    electricalPanelOpen: "/demo-media/images/evidence_electrical_panel_open.jpg",
-    fireCorridorBlocked: "/demo-media/images/evidence_fire_corridor_blocked.jpg",
-    extinguisherLowPressure: "/demo-media/images/evidence_extinguisher_low_pressure.jpg",
-    electricalCabinetVisible: "/demo-media/images/evidence_electrical_cabinet_visible.jpg",
-    hotWorkTempPower: "/demo-media/images/evidence_hot_work_temp_power.jpg",
-    hydrantExtinguisher: "/demo-media/images/evidence_hydrant_extinguisher.jpg",
-    infraredOverheat: "/demo-media/images/evidence_infrared_overheat.jpg",
+    ...sceneImages,
     locationTrajectoryMap: "/demo-media/images/location_trajectory_map.png",
-    rectificationBefore: "/demo-media/images/rectification_before.jpg",
-    rectificationAfter: "/demo-media/images/rectification_after.jpg",
     audioWaveform: "/demo-media/images/audio_waveform_card.png",
     reportCenter: "/demo-media/images/page_report_center.png",
     reportCenterPages: "/demo-media/images/page_report_center_three_pages.png",
     remoteExpertConsole: "/demo-media/images/page_remote_expert_console.png",
-    rectificationProcess: Array.from({ length: 8 }, (_, index) => `/demo-media/images/rectification_process_${String(index + 1).padStart(2, "0")}.jpg`)
+    rectificationProcess: rectificationPhotos
   },
-  videos: {
-    helmetLive: "/demo-media/videos/helmet_live_electrical_inspection.mp4",
-    fireCorridor: "/demo-media/videos/fire_corridor_obstruction.mp4",
-    extinguisherPressure: "/demo-media/videos/extinguisher_pressure_check.mp4",
-    hotWorkTempPower: "/demo-media/videos/hot_work_temp_power_check.mp4",
-    locationReplay: "/demo-media/videos/location_trajectory_replay.mp4",
-    rectificationBeforeAfter: "/demo-media/videos/rectification_before_after.mp4"
-  },
+  videos: sceneVideos,
   audio: {
     hazardDescription: "/demo-media/audio/audio_hazard_description.mp3",
     expertInstruction: "/demo-media/audio/audio_expert_instruction.mp3",
@@ -173,6 +162,12 @@ const demoMedia = {
 };
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8080/api").replace(/\/$/, "");
+const APP_BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function withAppBasePath(route: string) {
+  if (!APP_BASE_PATH) return route || "/";
+  return route === "/" ? `${APP_BASE_PATH}/` : `${APP_BASE_PATH}${route}`;
+}
 
 function apiUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -222,6 +217,7 @@ const pageTitles: Record<PageKey, string> = {
 
 const menuItems: { key: PageKey; label: string; icon: React.ElementType }[] = [
   { key: "dashboard", label: "运营工作台", icon: Home },
+  { key: "customers", label: "客户管理", icon: UsersRound },
   { key: "projects", label: "项目管理", icon: FileText },
   { key: "tasks", label: "检查任务", icon: CheckSquare },
   { key: "helmet", label: "安全帽现场端", icon: HardHat },
@@ -343,7 +339,7 @@ const taskRows = [
 const alertRows = [
   ["HD2025050001", "国控大厦项目", "消防通道堆放杂物", "5天", "重大隐患"],
   ["HD2025050002", "齐鲁科技园", "配电柜接线松动", "3天", "重大隐患"],
-  ["HD2025050003", "鲁商广场", "灭火器压力不足", "2天", "较大隐患"],
+  ["HD2025050003", "鲁商广场", "灭火器压力待核查", "2天", "较大隐患"],
   ["HD2025050004", "山东国控大数据中心", "应急照明故障", "1天", "一般隐患"]
 ];
 
@@ -359,17 +355,26 @@ const projectRows = [
 ];
 
 const stats = [
-  { title: "今日检查任务", value: 48, unit: "项", icon: ClipboardList, tone: "blue", footer: [["已完成", "16 项"], ["完成率", "33.33%"]] },
-  { title: "待整改隐患", value: 152, unit: "项", icon: ShieldAlert, tone: "orange", footer: [["一般隐患", "98 项"], ["重大隐患", "54 项"]] },
-  { title: "超期预警", value: 24, unit: "项", icon: Siren, tone: "red", footer: [["即将超期", "12 项"], ["已超期", "12 项"]] },
-  { title: "安全帽设备", value: 36, unit: "顶", icon: HardHat, tone: "green", footer: [["在线", "28 顶"], ["离线", "8 顶"]] }
+  { title: "今日检查任务", value: 48, unit: "项", icon: ClipboardList, tone: "blue", image: sceneImages.electricalPanelOpen, footer: [["已完成", "16 项"], ["完成率", "33.33%"]] },
+  { title: "待整改隐患", value: 152, unit: "项", icon: ShieldAlert, tone: "orange", image: sceneImages.fireCorridorBlocked, footer: [["一般隐患", "98 项"], ["重大隐患", "54 项"]] },
+  { title: "超期预警", value: 24, unit: "项", icon: Siren, tone: "red", image: sceneImages.extinguisherLowPressure, footer: [["即将超期", "12 项"], ["已超期", "12 项"]] },
+  { title: "安全帽设备", value: 36, unit: "顶", icon: HardHat, tone: "green", image: sceneImages.temporaryPower, footer: [["在线", "28 顶"], ["离线", "8 顶"]] }
+];
+
+const overviewEvidence = [
+  { title: "配电箱门未关闭", project: "齐鲁科技园 · 配电室", src: sceneImages.electricalPanelOpen, tone: "danger" },
+  { title: "消防通道占用", project: "国控大厦 · 东侧通道", src: sceneImages.fireCorridorBlocked, tone: "warning" },
+  { title: "线缆防护待核查", project: "国控大厦 · B1 配电室", src: sceneImages.cableExposed, tone: "danger" },
+  { title: "灭火器压力待核查", project: "鲁商广场 · 后厨", src: sceneImages.extinguisherLowPressure, tone: "warning" },
+  { title: "临时电源箱防护", project: "高新智造 · B 区动火点", src: sceneImages.temporaryPower, tone: "warning" },
+  { title: "消火栓点位复核", project: "高新智造 · 3 号楼", src: sceneImages.hydrantExtinguisher, tone: "success" }
 ];
 
 const rectification = [
-  { name: "待整改", value: 152, color: "#ef4444" },
-  { name: "整改中", value: 68, color: "#f97316" },
-  { name: "待复查", value: 30, color: "#2f80ed" },
-  { name: "已整改", value: 54, color: "#18a863" }
+  { name: "待整改", value: 152, color: "var(--risk-red-text)" },
+  { name: "整改中", value: 68, color: "var(--risk-orange-text)" },
+  { name: "待复查", value: 30, color: "var(--accent-blue)" },
+  { name: "已整改", value: 54, color: "var(--risk-green-text)" }
 ];
 
 const helmetTrend = [
@@ -487,17 +492,17 @@ const managedDeviceSeed: ManagedDevice[] = [
 ];
 
 const hazardClueSeed: HazardClue[] = [
-  { id: "XS20250516001", taskName: "国控大厦消防安全检查", project: "国控大厦项目", checkType: "消防安全检查", inspector: "张三", checkDate: "2025-05-16", sourceDevice: "aa的智能安全帽", foundTime: "10:31:02", location: "2号楼B1层 配电室", tags: ["配电箱未关闭", "线缆裸露"], risk: "高风险", source: "图片识别", status: "待登记", description: "配电箱门未关闭，箱内多处线缆裸露，存在触电风险。", aiAdvice: "立即关闭配电箱并上锁，对裸露线缆做绝缘包扎，补贴警示标识。" },
+  { id: "XS20250516001", taskName: "国控大厦消防安全检查", project: "国控大厦项目", checkType: "消防安全检查", inspector: "张三", checkDate: "2025-05-16", sourceDevice: "aa的智能安全帽", foundTime: "10:31:02", location: "2号楼B1层 配电室", tags: ["配电箱未关闭", "线缆防护待核查"], risk: "高风险", source: "图片识别", status: "待登记", description: "配电箱门未关闭，箱内多处线缆防护待核查，存在触电风险。", aiAdvice: "立即关闭配电箱并上锁，对裸露线缆做绝缘包扎，补贴警示标识。" },
   { id: "XS20250516002", taskName: "国控大厦消防安全检查", project: "国控大厦项目", checkType: "消防安全检查", inspector: "张三", checkDate: "2025-05-16", sourceDevice: "aa的智能安全帽", foundTime: "10:31:28", location: "东侧消防通道", tags: ["消防通道占用"], risk: "中风险", source: "视频关键帧", status: "待登记", description: "消防通道有杂物堆放，影响疏散通行。", aiAdvice: "清理消防通道杂物，设置禁止堆放标识，并纳入日常巡查。" },
   { id: "XS20250516003", taskName: "齐鲁科技园配电室专项检查", project: "齐鲁科技园", checkType: "用电安全检查", inspector: "李四", checkDate: "2025-05-16", sourceDevice: "bb的智能安全帽", foundTime: "11:08:45", location: "3号楼配电间", tags: ["线缆老化破损"], risk: "高风险", source: "人工上报", status: "待登记", description: "配电间部分线缆外皮老化破损，需要停电检修。", aiAdvice: "停用相关支路，完成绝缘检测和线缆更换后再恢复供电。" },
-  { id: "XS20250516004", taskName: "鲁商广场消防通道复查", project: "鲁商广场", checkType: "复查验收", inspector: "王五", checkDate: "2025-05-16", sourceDevice: "手机端", foundTime: "14:22:10", location: "后厨通道", tags: ["灭火器压力不足"], risk: "中风险", source: "图片识别", status: "已登记", description: "灭火器压力表低于正常范围。", aiAdvice: "更换或重新充装灭火器，并检查周边点位配置数量。" },
+  { id: "XS20250516004", taskName: "鲁商广场消防通道复查", project: "鲁商广场", checkType: "复查验收", inspector: "王五", checkDate: "2025-05-16", sourceDevice: "手机端", foundTime: "14:22:10", location: "后厨通道", tags: ["灭火器压力待核查"], risk: "中风险", source: "图片识别", status: "已登记", description: "灭火器压力表低于正常范围。", aiAdvice: "更换或重新充装灭火器，并检查周边点位配置数量。" },
   { id: "XS20250516005", taskName: "高新智造产业园动火临电检查", project: "高新智造产业园", checkType: "动火临电", inspector: "赵六", checkDate: "2025-05-17", sourceDevice: "专家补录", foundTime: "09:15:33", location: "B区动火点", tags: ["临时用电不规范", "接地缺失"], risk: "重大隐患", source: "专家补录", status: "待提交", description: "临时用电箱缺少防护，动火设备接地措施不足。", aiAdvice: "暂停现场作业，补齐临电防护和接地检测记录后再复工。" },
   { id: "XS20250516006", taskName: "银座佳驿酒店后厨用电检查", project: "银座佳驿酒店", checkType: "用电安全检查", inspector: "张三", checkDate: "2025-05-15", sourceDevice: "手机端", foundTime: "16:40:20", location: "后厨操作间", tags: ["插排串接"], risk: "低风险", source: "人工上报", status: "已提交", description: "后厨存在插排串接和线缆拖地。", aiAdvice: "更换固定插座，线缆穿管固定，避免潮湿区域拖地使用。" }
 ];
 
 const hazardLedgerSeed: HazardLedger[] = [
   { id: "HZ20250516001", title: "配电箱未关闭，存在触电风险", project: "齐鲁科技园", taskName: "配电室专项检查", category: "用电安全 / 配电箱及线路", risk: "高风险", unit: "山东消防技术服务中心", person: "张三", deadline: "2025-05-16", status: "待整改", foundTime: "2025-05-15 10:21", overdueDays: 7, source: "智能安全帽", measure: "关闭配电箱并上锁，整理线缆，粘贴警示标识。" },
-  { id: "HZ20250516002", title: "灭火器压力不足", project: "齐鲁科技园", taskName: "消防设施巡检", category: "消防设施 / 灭火器", risk: "中风险", unit: "齐鲁科技园物业", person: "李四", deadline: "2025-05-17", status: "整改中", foundTime: "2025-05-15 11:05", overdueDays: 0, source: "手机端", measure: "更换压力不足灭火器并重新登记台账。" },
+  { id: "HZ20250516002", title: "灭火器压力待核查", project: "齐鲁科技园", taskName: "消防设施巡检", category: "消防设施 / 灭火器", risk: "中风险", unit: "齐鲁科技园物业", person: "李四", deadline: "2025-05-17", status: "整改中", foundTime: "2025-05-15 11:05", overdueDays: 0, source: "手机端", measure: "更换压力不足灭火器并重新登记台账。" },
   { id: "HZ20250516003", title: "安全通道堆物", project: "鲁商广场", taskName: "消防通道复查", category: "消防安全 / 疏散通道", risk: "高风险", unit: "鲁商广场运营部", person: "王五", deadline: "2025-05-16", status: "待复查", foundTime: "2025-05-14 09:48", overdueDays: 3, source: "视频关键帧", measure: "清理通道堆物并设置巡检责任人。" },
   { id: "HZ20250516004", title: "电缆线裸露", project: "山东国控大数据中心", taskName: "机房用电检查", category: "用电安全 / 线缆", risk: "中风险", unit: "数据中心运维部", person: "赵六", deadline: "2025-05-18", status: "企业确认", foundTime: "2025-05-13 16:20", overdueDays: 0, source: "图片识别", measure: "完成线缆绝缘包扎并上传整改后照片。" },
   { id: "HZ20250516005", title: "消防栓被遮挡", project: "高新智造产业园", taskName: "园区消防巡检", category: "消防设施 / 消火栓", risk: "低风险", unit: "高新区物业", person: "孙七", deadline: "2025-05-20", status: "专家复核", foundTime: "2025-05-12 13:30", overdueDays: 0, source: "人工上报", measure: "移除遮挡物，补充地面警示线。" },
@@ -517,7 +522,7 @@ const genericTables: Record<string, { headers: string[]; rows: string[][] }> = {
   analytics: { headers: ["指标名称", "当前值", "环比", "风险说明", "状态"], rows: [["高风险隐患", "25", "-4", "持续下降", "正常"], ["超期整改", "24", "+2", "需要督办", "预警"], ["安全帽在线率", "77.8%", "+3.2%", "现场稳定", "正常"]] },
   warnings: { headers: ["预警编号", "预警类型", "项目名称", "触发时间", "状态"], rows: [["YJ20250516001", "超期整改", "国控大厦项目", "05-16 10:42", "待处理"], ["YJ20250516002", "设备离线", "鲁商广场", "05-16 09:21", "待处理"], ["YJ20250516003", "高风险隐患", "山东国控大数据中心", "05-16 08:50", "处理中"]] },
   knowledge: { headers: ["条目名称", "分类", "适用场景", "更新人", "状态"], rows: [["配电柜检查要点", "用电安全", "配电室巡检", "系统管理员", "已发布"], ["消防通道判定标准", "消防安全", "楼宇检查", "系统管理员", "已发布"], ["智能安全帽取证规范", "现场作业", "远程会诊", "系统管理员", "草稿"]] },
-  hazardGraph: { headers: ["图谱节点", "关联风险", "关联标准", "典型案例", "状态"], rows: [["配电箱未关闭", "触电风险 / 电气火灾", "GB 50054-2011", "128 条", "已发布"], ["消防通道占用", "疏散受阻", "GB 50016-2014", "96 条", "已发布"], ["灭火器压力不足", "初起火灾处置失败", "GB 50140-2005", "72 条", "已发布"], ["临时用电不规范", "短路 / 过载", "JGJ 46-2005", "58 条", "维护中"]] },
+  hazardGraph: { headers: ["图谱节点", "关联风险", "关联标准", "典型案例", "状态"], rows: [["配电箱未关闭", "触电风险 / 电气火灾", "GB 50054-2011", "128 条", "已发布"], ["消防通道占用", "疏散受阻", "GB 50016-2014", "96 条", "已发布"], ["灭火器压力待核查", "初起火灾处置失败", "GB 50140-2005", "72 条", "已发布"], ["临时用电不规范", "短路 / 过载", "JGJ 46-2005", "58 条", "维护中"]] },
   expertRules: { headers: ["规则名称", "专业方向", "触发条件", "责任组", "状态"], rows: [["配电箱闭锁检查规则", "电气安全", "识别到箱门开启或未上锁", "电气专家组", "启用"], ["消防通道占用判定规则", "消防安全", "通道堆物或宽度不足", "消防专家组", "启用"], ["灭火器压力异常规则", "消防设施", "压力表不在绿色区间", "消防设施组", "启用"], ["临时用电接地规则", "作业安全", "接地缺失或漏保异常", "作业安全组", "草稿"]] },
   settings: { headers: ["配置项", "配置内容", "负责人", "更新时间", "状态"], rows: [["角色权限", "运营管理员 / 检查员 / 专家", "系统管理员", "05-16 09:00", "启用"], ["消息规则", "隐患超期自动提醒", "系统管理员", "05-15 18:00", "启用"], ["项目字典", "园区 / 楼宇 / 数据中心", "系统管理员", "05-14 16:00", "启用"]] }
 };
@@ -587,6 +592,7 @@ function App() {
   const [date, setDate] = useState("2025-05-16");
   const [project, setProject] = useState(projectOptions[0].value);
   const [toast, setToast] = useState<string | null>(null);
+  const [resourceFocus, setResourceFocus] = useState<{ page: string; id: string; token: number } | null>(null);
 
   useEffect(() => {
     const syncRoute = () => {
@@ -595,6 +601,7 @@ function App() {
       setCustomerView(route.customerView);
       setHazardView(route.hazardView);
       setToast(null);
+      setResourceFocus(null);
     };
     window.addEventListener("popstate", syncRoute);
     return () => window.removeEventListener("popstate", syncRoute);
@@ -607,7 +614,7 @@ function App() {
   }, [toast]);
 
   const currentTitle = page === "hazards" ? hazardViewLabels[hazardView] : pageTitles[page];
-  const showGlobalFilters = ["dashboard", "customers", "projects", "analytics", "warnings"].includes(page);
+  const showGlobalFilters = page === "dashboard";
   const currentProjectOptions = projectOptions.some((option) => option.value === project) ? projectOptions : [...projectOptions, toOption(project)];
   const globalFilters = (
     <>
@@ -617,11 +624,18 @@ function App() {
   );
 
   const navigate = (next: PageKey, message?: string, routeOverride?: string) => {
+    setResourceFocus(null);
     setPage(next);
     const route = routeOverride ?? pageRoutes[next] ?? "/";
-    if (window.location.pathname !== route) window.history.pushState({}, "", route);
+    const publicRoute = withAppBasePath(route);
+    if (window.location.pathname !== publicRoute) window.history.pushState({}, "", publicRoute);
     setToast(message ?? `已进入${pageTitles[next]}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const navigateResource = (target: ResourceTarget, id?: string) => {
+    navigate(target);
+    if (id) setResourceFocus({ page: target, id, token: Date.now() });
   };
 
   const openCustomer = (view: CustomerView) => {
@@ -645,25 +659,23 @@ function App() {
   };
 
   return (
-    <div className={`workbench-shell ${collapsed ? "is-collapsed" : ""}`}>
+    <div className={`workbench-shell tech-blue-theme ${collapsed ? "is-collapsed" : ""} ${page === "experts" ? "expert-workspace-theme" : ""}`}>
       <Sidebar page={page} customerView={customerView} hazardView={hazardView} collapsed={collapsed} navigate={navigate} openCustomer={openCustomer} openHazard={openHazard} toggleCollapsed={() => setCollapsed((value) => !value)} />
       <main className="workspace">
         {page !== "helmet" && page !== "ai" && page !== "experts" && page !== "knowledge" && page !== "hazardGraph" && page !== "expertRules" && <Topbar title={currentTitle} filters={showGlobalFilters ? globalFilters : null} onMessage={() => navigate("warnings", "已打开消息与预警中心")} onTodo={() => navigate("tasks", "已打开待办检查任务")} onHelp={() => navigate("knowledge", "已打开帮助与知识库")} onFullscreen={toggleFullscreen} onUser={() => navigate("settings", "已打开系统管理")} />}
         {page === "dashboard" && <Dashboard navigate={navigate} date={date} project={project} onResetFilters={() => { setDate("2025-05-16"); setProject(projectOptions[0].value); }} />}
-        {page === "customers" && customerView === "enterprise" && <EnterpriseArchivePage setToast={setToast} navigate={navigate} />}
-        {page === "projects" && <ProjectMapPage setToast={setToast} navigate={navigate} />}
+        {["customers", "projects", "devices", "templates", "settings"].includes(page) && <ResourceModules key={`${page}-${resourceFocus?.token || "default"}`} page={page} navigate={navigateResource} focusId={resourceFocus?.page === page ? resourceFocus.id : undefined} />}
         {page === "tasks" && <InspectionTasksPage setToast={setToast} navigate={navigate} />}
         {page === "hazards" && <HazardClosurePage view={hazardView} setView={openHazard} setToast={setToast} />}
         {page === "helmet" && <HelmetLivePage setToast={setToast} navigate={navigate} />}
         {page === "ai" && <AiModelCenterPage setToast={setToast} navigate={navigate} />}
-        {page === "devices" && <DevicesManagementPage setToast={setToast} navigate={navigate} />}
-        {page === "templates" && <InspectionTemplatesPage setToast={setToast} />}
         {page === "experts" && <ExpertPage setToast={setToast} navigate={navigate} />}
-        {page === "reports" && <ReportsGeneratePage setToast={setToast} />}
+        {["analytics", "warnings", "reports"].includes(page) && <OperationsModules page={page as OperationsPage} navigate={navigate} notify={setToast} />}
         {page === "knowledge" && <KnowledgePage setToast={setToast} />}
         {page === "hazardGraph" && <HazardGraphPage setToast={setToast} />}
         {page === "expertRules" && <ExpertRulesPage setToast={setToast} />}
-        {!["dashboard", "customers", "projects", "tasks", "hazards", "helmet", "ai", "devices", "templates", "experts", "reports", "knowledge", "hazardGraph", "expertRules"].includes(page) && <GenericModulePage page={page} navigate={navigate} />}
+        {!["dashboard", "customers", "projects", "tasks", "hazards", "helmet", "ai", "devices", "templates", "experts", "reports", "analytics", "warnings", "knowledge", "hazardGraph", "expertRules", "settings"].includes(page) && <GenericModulePage page={page} navigate={navigate} />}
+        <footer className="demo-media-footer">演示环境 · 场景素材仅作功能展示 <a href="/demo-media/scene-photos/sources.html" target="_blank" rel="noreferrer">素材来源与授权</a></footer>
       </main>
       {toast && <div className="toast" role="status"><CheckCircle2 size={16} />{toast}</div>}
     </div>
@@ -692,10 +704,15 @@ function Sidebar({
   const customerActive = page === "customers";
   const hazardActive = page === "hazards";
   const modelCenterActive = ["ai", "knowledge", "hazardGraph", "expertRules"].includes(page);
+  const navigationGroups: { label: string; keys: PageKey[] }[] = [
+    { label: "工作空间", keys: ["dashboard", "tasks", "helmet", "hazards", "experts"] },
+    { label: "智能分析", keys: ["ai", "analytics", "warnings", "reports"] },
+    { label: "资源管理", keys: ["customers", "projects", "devices", "templates", "settings"] }
+  ];
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-icon"><ShieldCheck size={26} /></div>
+        <div className="brand-icon"><img src="/brand/brand-mark-v2.png" alt="" /></div>
         <strong>消防与用电安全<span className="brand-subtitle">智能检查服务平台</span></strong>
       </div>
       <button className="enterprise" onClick={() => openCustomer("enterprise")} title="山东国控企管">
@@ -704,28 +721,16 @@ function Sidebar({
         <ChevronDown size={16} />
       </button>
       <nav aria-label="主导航">
-        <button className={page === "dashboard" ? "active" : ""} onClick={() => navigate("dashboard")} title="运营工作台">
-          <Home size={20} />
-          <span>运营工作台</span>
-          {page !== "dashboard" && <ChevronRight size={15} />}
-        </button>
-        <button className={customerActive ? "active" : ""} onClick={() => openCustomer("enterprise")} title="客户管理">
-          <UsersRound size={20} />
-          <span>客户管理</span>
-          <ChevronDown size={15} />
-        </button>
-        {!collapsed && customerActive && (
-          <div className="subnav">
-            <button className={customerActive && customerView === "enterprise" ? "sub-active" : ""} onClick={() => openCustomer("enterprise")}>企业档案</button>
-          </div>
-        )}
-        {menuItems.slice(1).map(({ key, label, icon: Icon }) => (
+        {navigationGroups.map((group) => <section className="navigation-section" key={group.label} aria-label={group.label}>
+        {!collapsed && <p className="navigation-section-label">{group.label}</p>}
+        {group.keys.map((itemKey) => menuItems.find((item) => item.key === itemKey)!).map(({ key, label, icon: Icon }) => (
           <div className="nav-group" key={key}>
-            <button className={(key === "ai" ? modelCenterActive : page === key) ? "active" : ""} onClick={() => key === "hazards" ? openHazard("registration") : navigate(key)} title={label}>
+            <button className={(key === "ai" ? modelCenterActive : page === key) ? "active" : ""} aria-current={(key === "ai" ? modelCenterActive : page === key) ? "page" : undefined} onClick={() => key === "hazards" ? openHazard("registration") : key === "customers" ? openCustomer("enterprise") : navigate(key)} title={label}>
               <Icon size={20} />
               <span>{label}</span>
               {key === "hazards" || key === "ai" ? <ChevronDown size={15} /> : page !== key && <ChevronRight size={15} />}
             </button>
+            {!collapsed && key === "customers" && customerActive && <div className="subnav"><button className={customerView === "enterprise" ? "sub-active" : ""} onClick={() => openCustomer("enterprise")}>企业档案</button></div>}
             {!collapsed && key === "ai" && modelCenterActive && (
               <div className="subnav">
                 <button className={page === "ai" ? "sub-active" : ""} onClick={() => navigate("ai")}>大模型中台</button>
@@ -742,7 +747,7 @@ function Sidebar({
               </div>
             )}
           </div>
-        ))}
+        ))}</section>)}
       </nav>
       <button className="collapse-menu" onClick={toggleCollapsed} title={collapsed ? "展开菜单" : "收起菜单"}>
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -756,19 +761,17 @@ function Topbar({ title, filters, onMessage, onTodo, onHelp, onFullscreen, onUse
   return (
     <header className="topbar">
       <div className="topbar-actions-row">
-        <div className="demo-indicator"><ShieldCheck size={14} />演示数据<span>DEMO</span></div>
+        <div className="topbar-title"><ShieldCheck size={18} /><span className="platform-crumb">安全运营平台</span><ChevronRight size={14} /><h1>{title}</h1></div>
         <div className="topbar-actions">
+          <div className="demo-indicator"><i />演示模式</div>
           <button className="nav-action" onClick={onMessage}><Bell size={20} />消息<span>12</span></button>
           <button className="nav-action" onClick={onTodo}><CalendarDays size={20} />待办<span>5</span></button>
-          <button className="nav-action" onClick={onHelp}><CircleHelp size={20} />帮助中心</button>
-          <button className="nav-action" onClick={onFullscreen}><Maximize size={20} />全屏</button>
+          <button className="nav-action icon-action" title="帮助中心" aria-label="帮助中心" onClick={onHelp}><CircleHelp size={20} /></button>
+          <button className="nav-action icon-action" title="全屏" aria-label="全屏" onClick={onFullscreen}><Maximize size={20} /></button>
           <button className="user-menu" onClick={onUser}><UserCircle2 size={28} />系统管理员<ChevronDown size={15} /></button>
         </div>
       </div>
-      <div className={`topbar-context ${filters ? "" : "no-filters"}`}>
-        <div className="topbar-title"><ListCollapse size={20} /><h1>{title}</h1></div>
-        {filters && <section className="filters topbar-filters">{filters}</section>}
-      </div>
+      {filters && <div className="topbar-context"><span className="filter-context-label"><SlidersHorizontal size={14} />清单筛选</span><section className="filters topbar-filters">{filters}</section></div>}
     </header>
   );
 }
@@ -780,17 +783,19 @@ function Dashboard({ navigate, date, project, onResetFilters }: { navigate: (pag
   return (
     <section className="content-grid dashboard-overview">
       <div className="overview-heading">
-        <div><h2>安全运营概览</h2><p>平台汇总 · 任务、隐患与设备一览</p></div>
+        <div><span className="overview-eyebrow">巡检 · 识别 · 整改 · 复核</span><h2>安全运营总览</h2><p>掌握任务进度，优先处理需要关注的风险。</p></div>
         <div className="overview-actions"><button className="secondary-btn" onClick={() => navigate("reports")}><FileText size={16} />查看检查报告</button><button className="primary-btn" onClick={() => navigate("tasks")}><ClipboardList size={16} />派发检查任务</button></div>
       </div>
+      <div className="overview-scope"><span><CalendarDays size={14} />2025 年 5 月演示样例 · 指标为平台汇总，日期与项目仅筛选对应清单</span>{filtersChanged && <button onClick={onResetFilters}>重置筛选</button>}</div>
       <div className="stats-row">{stats.map((item) => <StatCard key={item.title} {...item} />)}</div>
-      <div className="overview-scope"><span><CalendarDays size={15} />2025 年 5 月演示样例 · 日期筛选任务，项目筛选任务与预警清单</span>{filtersChanged && <button onClick={onResetFilters}>重置筛选</button>}</div>
-      <Panel className="overview-tasks" title={`检查任务 · ${visibleTasks.length} 项`} onMore={() => navigate("tasks", "已打开检查任务")}><DataTable headers={["任务编号", "项目名称", "检查类型", "检查人员", "计划时间", "状态"]} columnWidths={["21%", "23%", "14%", "14%", "16%", "12%"]} rows={visibleTasks} emptyText="当前日期或项目暂无检查任务，可调整上方筛选条件。" /></Panel>
+      <Panel className="overview-alerts" title={`优先关注 · ${visibleAlerts.length} 项超期隐患`} onMore={() => navigate("warnings", "已打开预警中心")}><div className="priority-list">{visibleAlerts.length === 0 ? <p className="priority-empty">当前项目暂无超期隐患</p> : visibleAlerts.map((row) => { const scene = getHazardScene(row[2])?.src ?? demoMedia.images.electricalPanelOpen; return <button className="priority-item" key={row[0]} onClick={() => navigate("warnings", "已打开预警中心")}><span className="priority-visual"><img src={scene} alt="" aria-hidden="true" /><span className={`priority-symbol ${row[4] === "重大隐患" ? "high" : row[4] === "一般隐患" ? "low" : "medium"}`}><ShieldAlert size={16} /></span></span><span className="priority-description"><strong>{row[2]}</strong><small>{row[1]}<span>·</span>{row[0]}</small></span><Badge label={row[4]} /><span className="priority-due">超期 {row[3]}</span><ChevronRight size={16} /></button>; })}</div></Panel>
       <Panel className="overview-rectification" title="隐患整改情况" onMore={() => navigate("hazards", "已打开隐患闭环")}><RectificationChart /></Panel>
-      <Panel className="overview-alerts" title={`隐患超期预警 · ${visibleAlerts.length} 项`} onMore={() => navigate("warnings", "已打开预警中心")}><DataTable headers={["隐患编号", "项目名称", "隐患描述", "超期时长", "风险等级"]} columnWidths={["21%", "24%", "27%", "13%", "15%"]} rows={visibleAlerts} emptyText="当前项目暂无超期预警。" /></Panel>
-      <Panel className="overview-map" title="园区风险分布" onMore={() => navigate("analytics", "已打开数据看板")}><ShandongMap /></Panel>
-      <Panel className="overview-trend" title="安全帽在线趋势" onMore={() => navigate("devices", "已打开设备管理")}><LineCard data={helmetTrend} colors={["#2f80ed", "#94a3b8"]} keys={["在线数量", "离线数量"]} xKey="time" /></Panel>
-      <Panel className="overview-trend" title="风险趋势" onMore={() => navigate("analytics", "已打开风险趋势")}><LineCard data={riskTrend} colors={["#ef4444", "#f97316", "#f6b500", "#18a863"]} keys={["高风险", "较高风险", "中风险", "低风险"]} xKey="day" /></Panel>
+      <Panel className="overview-tasks" title={`检查任务 · ${visibleTasks.length} 项`} onMore={() => navigate("tasks", "已打开检查任务")}><DataTable headers={["任务编号", "项目名称", "检查类型", "检查人员", "计划时间", "状态"]} columnWidths={["21%", "23%", "14%", "14%", "16%", "12%"]} rows={visibleTasks} emptyText="当前日期或项目暂无检查任务，可调整上方筛选条件。" /></Panel>
+      <Panel className="overview-field" title="现场巡检" onMore={() => navigate("helmet")}><button className="field-preview" onClick={() => navigate("helmet")} aria-label="进入安全帽现场端"><img src={demoMedia.images.electricalPanelOpen} alt="配电箱现场巡检演示画面" /><span className="field-preview-label"><Camera size={14} />第一视角 · 演示画面</span><span className="field-play"><PlayCircle size={36} /></span><span className="field-caption"><strong>每一处风险，都有迹可循</strong><span>进入安全帽现场端<ChevronRight size={14} /></span></span></button><div className="field-shortcuts"><button onClick={() => navigate("ai")}><Brain size={17} />AI 识别分析<ChevronRight size={14} /></button><button onClick={() => navigate("experts")}><UsersRound size={17} />远程专家协同<ChevronRight size={14} /></button></div></Panel>
+      <Panel className="overview-evidence" title="现场证据速览" onMore={() => navigate("hazards", "已打开隐患闭环查看现场证据")}><div className="overview-evidence-grid">{overviewEvidence.map((item) => <button className="overview-evidence-tile" key={item.title} onClick={() => navigate("hazards", `已打开隐患闭环查看：${item.title}`)}><img src={item.src} alt={`${item.title}演示素材`} /><span className={`evidence-tile-chip ${item.tone}`}>演示素材</span><span className="evidence-tile-overlay"><strong>{item.title}</strong><small>{item.project}</small></span></button>)}</div></Panel>
+      <Panel className="overview-trend" title="风险趋势" onMore={() => navigate("analytics", "已打开风险趋势")}><LineCard data={riskTrend} colors={["var(--risk-red-text)", "var(--risk-orange-text)", "var(--yellow)", "var(--risk-green-text)"]} keys={["高风险", "较高风险", "中风险", "低风险"]} xKey="day" /></Panel>
+      <Panel className="overview-trend" title="安全帽在线趋势" onMore={() => navigate("devices", "已打开设备管理")}><LineCard data={helmetTrend} colors={["var(--accent-blue)", "var(--text-subtle)"]} keys={["在线数量", "离线数量"]} xKey="time" /></Panel>
+      <Panel className="overview-map" title="园区风险分布" onMore={() => navigate("analytics", "已打开数据看板")}><ShandongMap onPointClick={(city) => navigate("analytics", `已打开${city}风险明细`)} /></Panel>
     </section>
   );
 }
@@ -1114,6 +1119,7 @@ function MediaPreviewModal({ preview, onClose }: { preview: MediaPreview | null;
       <div className={`media-preview ${preview.type}`}>
         {preview.type === "image" && <img src={preview.src} alt={preview.title} />}
         {preview.type === "video" && <video src={preview.src} controls autoPlay />}
+        {(preview.type === "image" || preview.type === "video") && <p className="media-source-note">{preview.caption ?? getMediaSourceNote(preview.src)} · 不代表当前项目的实地取证。 <a href="/demo-media/scene-photos/sources.html" target="_blank" rel="noreferrer">素材来源</a></p>}
         {preview.type === "audio" && (
           <div className="media-audio-preview">
             <audio src={preview.src} controls autoPlay />
@@ -1200,7 +1206,7 @@ function ProjectMapPage({ setToast, navigate }: { setToast: (message: string) =>
         <aside className="project-map-panel">
           <header><h2>项目地图</h2><SelectBox label="地图层级" value={mapLevel} options={["山东省", "济南市", "青岛市"].map(toOption)} onChange={(value) => { setMapLevel(value); setRegion(value); setToast(`已切换地图层级：${value}`); }} compact /></header>
           <div className="project-map">
-            <ShandongMap />
+            <ShandongMap onPointClick={(city) => setToast(`已定位${city}风险点`)} />
             {[
               { name: "国控大厦", left: 34, top: 47, level: "orange" },
               { name: "大数据中心", left: 39, top: 42, level: "red" },
@@ -1268,7 +1274,7 @@ function InspectionTasksPage({ setToast, navigate }: { setToast: (message: strin
   return (
     <section className="ops-module-page tasks-module-page">
       <div className="module-header-card">
-        <div><h2>检查任务模块</h2><p>承接任务计划、派发、现场执行和报告流转，本地任务派发模块已接入。</p></div>
+        <div><h2>检查任务</h2><p>统筹任务派发与现场执行，跟进每一次检查进度。</p></div>
         <div className="module-actions"><button className="primary-btn" onClick={() => setModal("new")}>新增任务</button><button className="secondary-btn" onClick={exportTasks}><Download size={16} />导出清单</button></div>
       </div>
       <div className="module-filter-card">
@@ -1281,7 +1287,9 @@ function InspectionTasksPage({ setToast, navigate }: { setToast: (message: strin
       </div>
       <div className="module-split-layout">
         <section className="module-list-card">
-          <DataTable headers={["任务编号", "任务名称", "检查类型", "所属项目", "检查人员", "计划时间", "状态"]} rows={filteredTasks.map((task) => [task.id, task.name, task.type, task.project, task.inspector, `${task.plannedDate} ${task.plannedTime}`, task.status])} selectedKey={selectedId} onRowClick={(row) => setSelectedId(row[0])} />
+          <header className="task-list-heading"><h3>任务清单 <span>{filteredTasks.length}</span></h3><span>选择任务查看详情</span></header>
+          <DataTable headers={["任务编号", "任务名称", "检查类型", "所属项目", "检查人员", "计划时间", "状态"]} columnWidths={["150px", "220px", "125px", "130px", "80px", "155px", "90px"]} rows={filteredTasks.map((task) => [task.id, task.name, task.type, task.project, task.inspector, `${task.plannedDate} ${task.plannedTime}`, task.status])} selectedKey={selectedId} onRowClick={(row) => setSelectedId(row[0])} />
+          <footer className="task-list-summary">共 {tasks.length} 项任务，当前显示 {filteredTasks.length} 项</footer>
         </section>
         <aside className="module-detail-card">
           <header><h3>{selectedTask.name}</h3><Badge label={selectedTask.status} /></header>
@@ -1418,7 +1426,8 @@ function MultiHazardRegistrationPage({ setView, setToast }: { setView: (view: Ha
       if (nextItem) setSelectedId(nextItem.id);
     }
   };
-  const evidenceImages = [demoMedia.images.electricalPanelOpen, demoMedia.images.cableExposed, demoMedia.images.fireCorridorBlocked, demoMedia.images.extinguisherLowPressure];
+  const evidenceImages = selected.tags.flatMap(title => { const scene = getHazardScene(title); return scene ? [{ title, ...scene }] : []; });
+  const evidenceVideos = Array.from(new Set(evidenceImages.flatMap(item => item.video ? [item.video] : [])));
   return (
     <div className="multi-hazard-page">
       <div className="multi-filter-card">
@@ -1447,10 +1456,11 @@ function MultiHazardRegistrationPage({ setView, setToast }: { setView: (view: Ha
         <section className="multi-card evidence-center-card">
           <header><h3>现场证据</h3><button className="text-link" onClick={() => { downloadText(`${selected.id}证据材料清单.txt`, `线索：${selected.id}\n证据：图片、视频、语音、位置轨迹`); setToast("证据材料已打包下载"); }}>全部下载</button></header>
           <div className="evidence-tab-row small">{["图片取证", "视频关键帧", "语音记录", "位置轨迹"].map((tab) => <button key={tab} className={evidenceTab === tab ? "active" : ""} onClick={() => setEvidenceTab(tab)}>{tab}</button>)}</div>
-          {evidenceTab === "图片取证" && <div className="multi-evidence-grid">{evidenceImages.map((src, index) => <button key={src} onClick={() => setPreview({ title: `${selected.id} 图片证据 ${index + 1}`, type: "image", src })}><img src={src} alt="现场证据" /><span>{selected.tags[index % selected.tags.length]}</span></button>)}</div>}
-          {evidenceTab === "视频关键帧" && <div className="multi-video-grid">{[demoMedia.videos.helmetLive, demoMedia.videos.fireCorridor].map((src, index) => <button key={src} onClick={() => setPreview({ title: `关键帧视频 ${index + 1}`, type: "video", src })}><video src={src} muted /><PlayCircle size={34} /><span>{index === 0 ? "10:31:02" : "10:31:28"}</span></button>)}</div>}
+          {evidenceTab === "图片取证" && <div className="multi-evidence-grid">{evidenceImages.map(({ src, title }, index) => <button key={`${title}-${index}`} onClick={() => setPreview({ title: `${selected.id} ${title}参考`, type: "image", src })}><img src={src} alt={title} /><span>{title} · 参考图</span></button>)}</div>}
+          {((evidenceTab === "图片取证" && evidenceImages.length === 0) || (evidenceTab === "视频关键帧" && evidenceVideos.length === 0)) && <p className="evidence-empty">暂无对应素材，待补充现场取证</p>}
+          {evidenceTab === "视频关键帧" && <div className="multi-video-grid">{evidenceVideos.map((src, index) => <button key={src} onClick={() => setPreview({ title: `场景图片轮播 ${index + 1}`, type: "video", src })}><video src={src} muted /><PlayCircle size={34} /><span>{`参考片段 ${index + 1} · 图片轮播`}</span></button>)}</div>}
           {evidenceTab === "语音记录" && <div className="multi-voice-list">{[demoMedia.audio.hazardDescription, demoMedia.audio.patrolNote].map((src, index) => <button key={src} onClick={() => setPreview({ title: `语音记录 ${index + 1}`, type: "audio", src, transcript: index === 0 ? demoMedia.transcripts.hazardDescription : demoMedia.transcripts.patrolNote })}><PlayCircle size={22} /><b>{index === 0 ? "现场描述录音" : "巡检补充说明"}</b><span>{index === 0 ? "00:38" : "00:24"}</span><small>{index === 0 ? demoMedia.transcripts.hazardDescription : demoMedia.transcripts.patrolNote}</small></button>)}</div>}
-          {evidenceTab === "位置轨迹" && <div className="multi-track-panel"><img src={demoMedia.images.locationTrajectoryMap} alt="位置轨迹" /><div className="track-points">{["起点", "配电室入口", "配电箱区域", "通道区域", "终点"].map((point, index) => <button key={point} onClick={() => setPreview({ title: `${point}轨迹回放`, type: "video", src: demoMedia.videos.locationReplay })}><b>{index + 1}</b><span>{point}</span></button>)}</div></div>}
+          {evidenceTab === "位置轨迹" && <TrackRoutePreview points={["起点", "配电室入口", "配电箱区域", "通道区域", "终点"]} onPointClick={(point) => setPreview({ title: `${point}轨迹回放`, type: "video", src: demoMedia.videos.locationReplay })} />}
           <section className="compact-timeline"><h3>证据时间线</h3>{["图片取证 10:31:02", "视频关键帧 10:31:28", "语音记录 10:31:45", "位置轨迹 10:32:10"].map((item) => <button key={item} onClick={() => { setEvidenceTab(item.split(" ")[0]); setToast(`已定位${item}`); }}>{item}<span>{selected.location}</span></button>)}</section>
         </section>
         <aside className="multi-card hazard-register-form">
@@ -1488,10 +1498,16 @@ function MultiHazardRectifyPage({ setToast }: { setToast: (message: string) => v
   const [keyword, setKeyword] = useState("");
   const [recheckResult, setRecheckResult] = useState("通过");
   const [expertConclusion, setExpertConclusion] = useState("通过");
-  const [extraPhotos, setExtraPhotos] = useState<string[]>([]);
+  const [extraPhotos, setExtraPhotos] = useState<Record<string, string[]>>({});
   const [modal, setModal] = useState<"dispatch" | "recheck" | "expert" | "archive" | null>(null);
   const [preview, setPreview] = useState<MediaPreview | null>(null);
   const current = rows.find((item) => item.id === selectedId) ?? rows[0];
+  const referenceImage = getHazardScene(current.title)?.src;
+  const hasPanelComparison = /配电箱|配电柜/.test(current.title);
+  const beforeImage = hasPanelComparison ? sceneImages.rectificationBefore : referenceImage;
+  const afterImage = hasPanelComparison ? sceneImages.rectificationAfter : undefined;
+  const recordPhotos = [...(hasPanelComparison ? rectificationPhotos : referenceImage ? [referenceImage] : []), ...(extraPhotos[current.id] ?? [])];
+
   const filteredRows = rows.filter((item) => (projectFilter === "全部项目" || item.project === projectFilter) && (statusFilter === "全部状态" || item.status === statusFilter) && (riskFilter === "全部等级" || item.risk === riskFilter) && (!keyword.trim() || `${item.id}${item.title}${item.project}${item.person}`.includes(keyword.trim())));
   const steps = ["隐患登记", "整改派发", "整改完成", "整改复查", "企业确认", "专家复核", "销号归档"];
   const stepIndex = Math.max(1, ["待整改", "整改中", "待复查", "企业确认", "专家复核", "已销号"].indexOf(current.status) + 1);
@@ -1501,7 +1517,7 @@ function MultiHazardRectifyPage({ setToast }: { setToast: (message: string) => v
   };
   const actionButtons = [
     ...(activeTab === "整改信息" && current.status === "待整改" ? [["派发整改", () => setModal("dispatch")] as const] : []),
-    ...(activeTab === "整改照片" && current.status === "整改中" ? [["上传整改照片", () => { setExtraPhotos((items) => [...items, demoMedia.images.rectificationAfter]); setToast("整改照片已加入当前隐患"); }] as const] : []),
+    ...(activeTab === "整改照片" && current.status === "整改中" && referenceImage ? [["添加参考图片", () => { setExtraPhotos((items) => ({ ...items, [current.id]: [...(items[current.id] ?? []), referenceImage] })); setToast("参考图片已加入当前演示记录"); }] as const] : []),
     ...(activeTab === "整改照片" && current.status === "整改中" ? [["提交整改完成", () => updateCurrent({ status: "待复查" }, "整改完成，已进入待复查")] as const] : []),
     ...(activeTab === "复查验收" && current.status === "待复查" ? [["提交复查结果", () => setModal("recheck")] as const] : []),
     ...(activeTab === "企业确认" && current.status === "企业确认" ? [["企业确认", () => updateCurrent({ status: "专家复核" }, "企业已确认，进入专家复核")] as const] : []),
@@ -1530,8 +1546,8 @@ function MultiHazardRectifyPage({ setToast }: { setToast: (message: string) => v
         <section className="multi-card rectify-process-card">
           <div className="flow-track archive">{steps.map((step, index) => <div key={step} className={index <= stepIndex ? "active" : ""}><i /><b>{step}</b><span>{index <= stepIndex ? "已处理" : "待处理"}</span></div>)}</div>
           <div className="rectify-tab-row small">{["整改信息", "整改照片", "复查验收", "企业确认", "专家复核", "销号归档"].map((tab) => <button key={tab} className={activeTab === tab ? "active" : ""} onClick={() => setActiveTab(tab)}>{tab}</button>)}</div>
-          {activeTab === "整改信息" && <div className="rectify-info-grid"><button className="rectify-photo" onClick={() => setPreview({ title: "整改前", type: "image", src: demoMedia.images.rectificationBefore })}><img src={demoMedia.images.rectificationBefore} alt="整改前" /><b>整改前</b></button><button className="rectify-photo after" onClick={() => setPreview({ title: "整改后", type: "image", src: demoMedia.images.rectificationAfter })}><img src={demoMedia.images.rectificationAfter} alt="整改后" /><b>整改后</b></button><p className="rectify-measure">{current.measure}</p></div>}
-          {activeTab === "整改照片" && <div className="multi-evidence-grid">{[...demoMedia.images.rectificationProcess, ...extraPhotos].map((src, index) => <button key={`${src}-${index}`} onClick={() => setPreview({ title: `整改过程照片 ${index + 1}`, type: "image", src })}><img src={src} alt="整改过程" /><span>2025-05-15 {10 + index}:2{index}</span></button>)}</div>}
+          {activeTab === "整改信息" && <div className="rectify-info-grid">{beforeImage ? <button className="rectify-photo" onClick={() => setPreview({ title: hasPanelComparison ? "整改前示例" : "同类场景参考", type: "image", src: beforeImage })}><img src={beforeImage} alt={current.title} /><b>{hasPanelComparison ? "整改前示例" : "同类场景参考"}</b></button> : <div className="evidence-empty">暂无对应照片，待补充现场材料</div>}{afterImage ? <button className="rectify-photo after" onClick={() => setPreview({ title: "整改后示例", type: "image", src: afterImage })}><img src={afterImage} alt="整改后示例" /><b>整改后示例</b></button> : <div className="evidence-empty">整改后照片待补充</div>}<p className="rectify-measure">{current.measure}</p></div>}
+          {activeTab === "整改照片" && <div className="multi-evidence-grid">{recordPhotos.map((src, index) => <button key={`${src}-${index}`} onClick={() => setPreview({ title: `参考照片 ${index + 1}`, type: "image", src })}><img src={src} alt={`${current.title}参考图`} /><span>参考照片 {index + 1}</span></button>)}{!recordPhotos.length && <p className="evidence-empty">暂无对应照片，待补充现场材料</p>}</div>}
           {activeTab === "复查验收" && <div className="module-form-grid"><SelectBox label="复查结果" value={recheckResult} options={["通过", "不通过"].map(toOption)} onChange={setRecheckResult} /><label><span>复查人</span><input defaultValue="李四" /></label><label><span>复查时间</span><input type="datetime-local" defaultValue="2025-05-16T14:30" /></label><label className="wide"><span>复查意见</span><textarea defaultValue="整改符合要求，现场证据完整。" /></label></div>}
           {activeTab === "企业确认" && <div className="module-form-grid enterprise-confirm-form"><label><span>确认人</span><input defaultValue="王磊" /></label><label><span>确认时间</span><input type="datetime-local" defaultValue="2025-05-16T15:10" /></label><label className="wide"><span>确认意见</span><textarea defaultValue="企业确认整改完成，现场具备安全使用条件。" /></label><div className="enterprise-confirm-assets"><div className="signature-preview"><span>企业电子签名</span><strong>王磊</strong></div><div className="seal-preview"><span>企业电子章</span><strong>齐鲁科技园管理有限公司</strong></div></div></div>}
           {activeTab === "专家复核" && <div className="module-form-grid"><label><span>专家姓名</span><input defaultValue="赵工" /></label><SelectBox label="复核结论" value={expertConclusion} options={["通过", "不通过", "需补充材料"].map(toOption)} onChange={setExpertConclusion} /><label className="wide"><span>复核意见</span><textarea defaultValue="整改资料完整，风险已消除，建议销号。" /></label></div>}
@@ -1600,7 +1616,7 @@ function MultiHazardDashboardPage({ setView, setToast }: { setView: (view: Hazar
         <section className="dashboard-card chart-fixed"><header><h3>风险等级分布</h3><button onClick={() => setRiskFilter("高风险")}>筛高风险</button></header><RectificationChart /></section>
         </div>
         <div className="multi-analysis-row">
-        <section className="dashboard-card wide chart-fixed"><header><h3>隐患趋势</h3><button onClick={() => setTrendMode((value) => value === "按日" ? "按周" : "按日")}>{trendMode}</button></header><LineCard data={riskTrend.map((item, index) => trendMode === "按周" ? { ...item, 高风险: item.高风险 - index, 较高风险: item.较高风险 - index, 中风险: item.中风险 - index } : item)} colors={["#ef4444", "#f97316", "#0f6fd1"]} keys={["高风险", "较高风险", "中风险"]} xKey="day" /></section>
+        <section className="dashboard-card wide chart-fixed"><header><h3>隐患趋势</h3><button onClick={() => setTrendMode((value) => value === "按日" ? "按周" : "按日")}>{trendMode}</button></header><LineCard data={riskTrend.map((item, index) => trendMode === "按周" ? { ...item, 高风险: item.高风险 - index, 较高风险: item.较高风险 - index, 中风险: item.中风险 - index } : item)} colors={["var(--risk-red-text)", "var(--risk-orange-text)", "var(--accent-blue)"]} keys={["高风险", "较高风险", "中风险"]} xKey="day" /></section>
         <section className="dashboard-card"><header><h3>责任单位排行 TOP10</h3><button onClick={() => setView("rectification")}>更多</button></header><div className="rank-bars">{["齐鲁科技园物业", "鲁商广场运营部", "数据中心运维部", "施工单位", "国控大厦物业"].map((name, index) => <p key={name}><span>{index + 1}</span><b>{name}</b><i style={{ width: `${90 - index * 12}%` }} /><em>{268 - index * 38}</em></p>)}</div></section>
         </div>
         <div className="multi-chart-row">
@@ -1655,7 +1671,20 @@ function MultiHazardOverduePage({ setToast }: { setToast: (message: string) => v
       <div className={`overdue-multi-layout ${selected ? "detail-open" : ""}`}>
         <section className="multi-card overdue-list-main">
           <header><h3>超期隐患列表</h3><span>共 {visible.length} 条</span></header>
-          <div className="table-fit"><table className="data-table"><thead><tr>{["隐患编号", "项目名称", "隐患描述", "风险等级", "责任单位", "责任人", "整改期限", "当前状态", "超期天数", "预警类型", "最近催办", "操作"].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{visible.map((item) => <tr key={item.id} className={selectedId === item.id ? "selected-row" : ""} onClick={() => setSelectedId(item.id)}><td>{item.id}</td><td>{item.project}</td><td>{item.title}</td><td><Badge label={item.risk} /></td><td>{item.unit}</td><td>{item.person}</td><td>{item.deadline}</td><td><Badge label={item.status} /></td><td className={item.overdueDays > 0 ? "danger-text" : ""}>{item.overdueDays}天</td><td>{item.overdueDays > 0 ? "已超期" : "即将超期"}</td><td>{item.overdueDays > 0 ? "2025-05-23" : "-"}</td><td><button onClick={(event) => { event.stopPropagation(); setSelectedId(item.id); }}>查看</button><button onClick={(event) => { event.stopPropagation(); update(item.id, { status: "已催办" }, "催办记录已生成"); }}>催办</button><button onClick={(event) => { event.stopPropagation(); setSelectedId(item.id); setModal("expert"); }}>专家</button></td></tr>)}</tbody></table></div>
+          <div className="table-fit" role="region" aria-label="超期隐患列表，可横向滚动" tabIndex={0}>
+            <table className="data-table overdue-data-table">
+              <colgroup>{[160, 160, 220, 100, 180, 80, 115, 110, 90, 110, 115, 170].map((width, index) => <col key={index} style={{ width }} />)}</colgroup>
+              <thead><tr>{["隐患编号", "项目名称", "隐患描述", "风险等级", "责任单位", "责任人", "整改期限", "当前状态", "超期天数", "预警类型", "最近催办", "操作"].map((item) => <th key={item} scope="col" className={item === "操作" ? "table-actions-cell" : undefined}>{item}</th>)}</tr></thead>
+              <tbody>{visible.map((item) => <tr key={item.id} className={selectedId === item.id ? "selected-row" : ""} onClick={() => setSelectedId(item.id)}>
+                <td title={item.id}>{item.id}</td><td title={item.project}>{item.project}</td><td title={item.title}>{item.title}</td><td><Badge label={item.risk} /></td><td title={item.unit}>{item.unit}</td><td>{item.person}</td><td>{item.deadline}</td><td><Badge label={item.status} /></td><td className={item.overdueDays > 0 ? "danger-text" : ""}>{item.overdueDays}天</td><td>{item.overdueDays > 0 ? "已超期" : "即将超期"}</td><td>{item.overdueDays > 0 ? "2025-05-23" : "-"}</td>
+                <td className="table-actions-cell"><div className="table-row-actions">
+                  <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(item.id); }}>查看</button>
+                  <button type="button" onClick={(event) => { event.stopPropagation(); update(item.id, { status: "已催办" }, "催办记录已生成"); }}>催办</button>
+                  <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(item.id); setModal("expert"); }}>专家</button>
+                </div></td>
+              </tr>)}</tbody>
+            </table>
+          </div>
         </section>
         {selected && <aside className="multi-card overdue-detail-panel">
           <header><h3>{selected.title}</h3><button onClick={() => setSelectedId(null)}>×</button></header>
@@ -1676,7 +1705,7 @@ function MultiHazardOverduePage({ setToast }: { setToast: (message: string) => v
 function HazardRegistrationPage({ setView, setToast }: { setView: (view: HazardView) => void; setToast: (message: string) => void }) {
   const [evidenceTab, setEvidenceTab] = useState("图片取证（4）");
   const [risk, setRisk] = useState("高风险");
-  const [tags, setTags] = useState(["线缆裸露", "消防通道占用"]);
+  const [tags, setTags] = useState(["线缆防护待核查", "消防通道占用"]);
   const [category, setCategory] = useState("用电安全 / 配电箱及线路");
   const [responsibleUnit, setResponsibleUnit] = useState("山东国控大数据中心");
   const [responsibleDept, setResponsibleDept] = useState("运维部");
@@ -1688,7 +1717,7 @@ function HazardRegistrationPage({ setView, setToast }: { setView: (view: HazardV
   const [uploadedVoices, setUploadedVoices] = useState<string[]>([]);
   const [playingVoice, setPlayingVoice] = useState("");
   const [deadline, setDeadline] = useState("2025-05-23");
-  const [description, setDescription] = useState("配电箱内多处线缆裸露未做绝缘包扎，配电箱门未关闭；东侧消防通道被杂物占用，影响疏散通行。");
+  const [description, setDescription] = useState("配电箱内多处线缆防护待核查未做绝缘包扎，配电箱门未关闭；东侧消防通道被杂物占用，影响疏散通行。");
   const [measure, setMeasure] = useState("1. 对配电箱内裸露线缆进行绝缘包扎，关闭配电箱门；\n2. 清理消防通道杂物，确保通道畅通。");
   const [mediaPreview, setMediaPreview] = useState<MediaPreview | null>(null);
   const [taskDetailOpen, setTaskDetailOpen] = useState(false);
@@ -1700,16 +1729,16 @@ function HazardRegistrationPage({ setView, setToast }: { setView: (view: HazardV
     ["建议整改：清理通道占用物并设置禁止堆放标识。", "建议专家复核：高风险用电点位可由电气专家远程复核。", "建议核查：确认整改后配电箱周边无可燃物堆放。"]
   ];
   const evidence = [
-    { label: "线缆裸露", time: "10:31:05", tone: "danger", wide: true, src: demoMedia.images.cableExposed },
+    { label: "线缆防护待核查", time: "10:31:05", tone: "danger", wide: true, src: demoMedia.images.cableExposed },
     { label: "消防通道占用", time: "10:31:28", tone: "warning", src: demoMedia.images.fireCorridorBlocked },
     { label: "配电箱未关闭", time: "10:31:02", tone: "danger", src: demoMedia.images.electricalPanelOpen },
-    { label: "灭火器压力不足", time: "10:31:45", tone: "warning", src: demoMedia.images.extinguisherLowPressure }
+    { label: "灭火器压力待核查", time: "10:31:45", tone: "warning", src: demoMedia.images.extinguisherLowPressure }
   ];
   const videoRecords = [
-    { title: "aa的智能安全帽 SHM20250516001", source: "aa的智能安全帽", project: "齐鲁科技园", time: "2025-05-14 10:31:02", duration: "00:42", src: demoMedia.videos.helmetLive },
-    { title: "bb的智能安全帽 SHM20250516002", source: "bb的智能安全帽", project: "国控大厦项目", time: "2025-05-14 10:32:18", duration: "01:15", src: demoMedia.videos.fireCorridor },
-    { title: "执法记录仪 0001234", source: "执法记录仪", project: "国控大厦项目", time: "2025-05-14 10:33:10", duration: "00:58", src: demoMedia.videos.extinguisherPressure },
-    { title: "监控摄像头 A-01", source: "监控摄像头", project: "齐鲁科技园", time: "2025-05-14 10:35:26", duration: "01:06", src: demoMedia.videos.hotWorkTempPower }
+    { title: "aa的智能安全帽 SHM20250516001", source: "aa的智能安全帽", project: "齐鲁科技园", time: "2025-05-14 10:31:02", duration: "00:12", src: demoMedia.videos.helmetLive },
+    { title: "bb的智能安全帽 SHM20250516002", source: "bb的智能安全帽", project: "国控大厦项目", time: "2025-05-14 10:32:18", duration: "00:04", src: demoMedia.videos.fireCorridor },
+    { title: "执法记录仪 0001234", source: "执法记录仪", project: "国控大厦项目", time: "2025-05-14 10:33:10", duration: "00:04", src: demoMedia.videos.extinguisherPressure },
+    { title: "监控摄像头 A-01", source: "监控摄像头", project: "齐鲁科技园", time: "2025-05-14 10:35:26", duration: "00:08", src: demoMedia.videos.hotWorkTempPower }
   ];
   const voiceRecords = [
     { id: "voice-1", title: "隐患现场描述录音", type: "隐患描述", duration: "00:38", speaker: "张三", source: "aa的智能安全帽", src: demoMedia.audio.hazardDescription, transcript: demoMedia.transcripts.hazardDescription },
@@ -1726,9 +1755,9 @@ function HazardRegistrationPage({ setView, setToast }: { setView: (view: HazardV
     demoMedia.images.hotWorkTempPower
   ];
   const timeline = [
-    ["图片取证", "10:31:05", "配电箱内线缆裸露，未做绝缘处理", "拍摄位置：配电室"],
+    ["图片取证", "10:31:05", "配电箱内线缆防护待核查，未做绝缘处理", "拍摄位置：配电室"],
     ["视频关键帧", "10:31:28", "消防通道被杂物占用，影响疏散通行", "拍摄位置：东侧通道"],
-    ["语音记录", "10:31:45", "配电箱门未关闭，线缆裸露，有触电风险；灭火器压力不足...", "拍摄位置：配电室"]
+    ["语音记录", "10:31:45", "配电箱门未关闭，线缆防护待核查，有触电风险；灭火器压力待核查...", "拍摄位置：配电室"]
   ];
   const trackRows = [
     ["1", "2025-05-14 10:30:58", "齐鲁科技园", "aa的智能安全帽", "2号楼1层 配电室入口", "00:02:36", "回放"],
@@ -1825,24 +1854,10 @@ function HazardRegistrationPage({ setView, setToast }: { setView: (view: HazardV
     }
     if (evidenceTab.startsWith("位置")) {
       const visibleTrackRows = trackRows.filter((row) => (mediaProject === "全部项目" || row[2] === mediaProject) && (deviceType === "全部设备" || row[3] === deviceType));
-      const pins = [
-        { label: "起", className: "start", left: 8, top: 72 },
-        { label: "1", className: "point", left: 20, top: 34 },
-        { label: "2", className: "point", left: 38, top: 32 },
-        { label: "3", className: "point", left: 56, top: 58 },
-        { label: "4", className: "point", left: 74, top: 42 },
-        { label: "终", className: "end", left: 92, top: 30 }
-      ];
       return (
         <div className="track-evidence-panel">
           <div className="evidence-filter-inline"><SelectBox label="项目" value={mediaProject} options={mediaProjectOptions.map(toOption)} onChange={(value) => { setMediaProject(value); setToast(`已筛选项目：${value}`); }} compact /><SelectBox label="设备类型" value={deviceType} options={["全部设备", "aa的智能安全帽", "bb的智能安全帽", "执法记录仪"].map(toOption)} onChange={(value) => { setDeviceType(value); setToast(`已筛选设备：${value}`); }} compact /><button className="primary-btn" onClick={() => setMediaPreview({ title: "轨迹回放视频：全程路线", type: "video", src: demoMedia.videos.locationReplay })}>轨迹回放</button><button className="secondary-btn" onClick={() => { setMediaProject("全部项目"); setDeviceType("全部设备"); setToast("轨迹筛选已重置"); }}>重置</button></div>
-          <div className="track-map linear">
-            <img src={demoMedia.images.locationTrajectoryMap} alt="位置轨迹平面图" />
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <polyline points="8,72 20,34 38,32 56,58 74,42 92,30" />
-            </svg>
-            {pins.map((pin) => <span key={pin.label} className={`pin ${pin.className}`} style={{ left: `${pin.left}%`, top: `${pin.top}%` }}>{pin.label}</span>)}
-          </div>
+          <TrackRoutePreview nodeCount={visibleTrackRows.length} onPointClick={(point) => setMediaPreview({ title: `轨迹回放：${point}`, type: "video", src: demoMedia.videos.locationReplay })} />
           <DataTable headers={["序号", "时间", "所属项目", "设备", "位置描述", "停留时长", "操作"]} rows={visibleTrackRows} onRowClick={(row) => setMediaPreview({ title: `轨迹回放视频：${row[1]}`, type: "video", src: demoMedia.videos.locationReplay })} />
         </div>
       );
@@ -1943,36 +1958,16 @@ function HazardRectificationPage({ setToast }: { setToast: (message: string) => 
     ["建议复核配电箱门锁闭状态，确认锁具可正常使用。", "建议检查箱内端子排压接情况，重点查看是否松动发热。", "建议对整改后照片进行同角度留存，便于报告归档。", "建议由责任部门建立每日巡查记录，连续跟踪 7 天。"],
     ["建议核查配电室周边是否仍有可燃物或杂物堆放。", "建议补充门锁细节图、警示标识图、线缆整理后全景图。", "建议专家复核整改前后对比材料是否完整。", "建议将该点位纳入下周抽检清单。"]
   ];
-  const photos = demoMedia.images.rectificationProcess.map((src, index) => ({ time: ["05-14 10:20", "05-14 10:35", "05-14 10:48", "05-14 11:05", "05-14 11:15", "05-14 11:28", "05-14 11:40", "05-14 11:52"][index], src }));
+  const photos = demoMedia.images.rectificationProcess.map((src, index) => ({ time: ["整改前示例", "整改后示例"][index], src }));
   const baseEvidenceCards = [
-    ["整改前：配电箱门未关闭，线路裸露", "整改前", "05-14 09:15", "李四", demoMedia.images.rectificationBefore],
-    ["整改中：工作人员整理线缆", "整改中", "05-14 10:35", "张三", demoMedia.images.rectificationProcess[1]],
-    ["整改中：补贴当心触电警示标识", "整改中", "05-14 10:48", "张三", demoMedia.images.rectificationProcess[2]],
-    ["整改后：配电箱门已关闭并上锁", "整改后", "05-14 11:28", "张三", demoMedia.images.rectificationAfter],
-    ["整改后：现场环境已清理", "整改后", "05-14 11:40", "张三", demoMedia.images.rectificationProcess[6]],
-    ["视频：整改过程视频 00:42", "视频", "05-14 10:31", "张三", demoMedia.videos.rectificationBeforeAfter],
-    ["文件：整改说明.pdf", "文件", "05-14 11:52", "张三", demoMedia.images.reportCenter],
-    ["整改后：门锁细节图", "整改后", "05-14 11:15", "张三", demoMedia.images.rectificationProcess[4]],
-    ["整改中：线缆固定完成", "整改中", "05-14 11:05", "张三", demoMedia.images.rectificationProcess[3]],
-    ["整改前：箱内线路杂乱", "整改前", "05-14 09:20", "李四", demoMedia.images.electricalPanelOpen],
-    ["整改后：警示标识清晰", "整改后", "05-14 11:45", "张三", demoMedia.images.rectificationProcess[7]],
-    ["文件：复查记录.docx", "文件", "05-16 09:35", "李四", demoMedia.images.reportCenterPages]
+    ["整改前：配电柜示例", "整改前", "05-14 09:15", "李四", demoMedia.images.rectificationBefore],
+    ["整改后：箱门闭合示例", "整改后", "05-14 11:28", "张三", demoMedia.images.rectificationAfter],
+    ["视频：整改对比图片轮播", "视频", "05-14 11:30", "张三", demoMedia.videos.rectificationBeforeAfter],
   ];
   const evidenceCards = [...baseEvidenceCards, ...extraEvidenceCards].filter((item) => !hiddenEvidence.includes(item[0]));
   const filteredEvidence = photoFilter === "全部" ? evidenceCards : evidenceCards.filter((item) => item[1] === photoFilter);
-  const reviewEvidence = [
-    ["整改后图片", demoMedia.images.rectificationAfter],
-    ["复查现场照片", demoMedia.images.rectificationProcess[6]],
-    ["配电箱门锁细节图", demoMedia.images.rectificationProcess[7]],
-    ["警示标识照片", demoMedia.images.rectificationProcess[4]],
-    ["线缆整理照片", demoMedia.images.rectificationProcess[3]]
-  ];
-  const confirmEvidence = [
-    ["整改后照片", demoMedia.images.rectificationAfter],
-    ["复查验收照片", demoMedia.images.rectificationProcess[5]],
-    ["企业现场确认照片", demoMedia.images.rectificationProcess[6]],
-    ["企业确认函.pdf", demoMedia.images.reportCenterPages]
-  ];
+  const reviewEvidence = [["箱门闭合示例（待复核）", demoMedia.images.rectificationAfter]];
+  const confirmEvidence = [["整改后示例（待现场确认）", demoMedia.images.rectificationAfter]];
   const previewEvidenceCard = (item: string[]) => {
     setSelectedPhoto(item[0]);
     setRectifyPreview({ title: item[0], type: item[1] === "视频" ? "video" : "image", src: item[4] || demoMedia.images.rectificationAfter });
@@ -2113,11 +2108,11 @@ function HazardRectificationPage({ setToast }: { setToast: (message: string) => 
           </section>
           <section>
             <h3>附件上传</h3>
-            <div className="upload-grid"><button onClick={() => { const name = `整改后：补充现场图片 ${extraEvidenceCards.length + 1}`; setExtraEvidenceCards((items) => [...items, [name, "整改后", "05-16 11:00", "张三", demoMedia.images.rectificationProcess[5]]]); setSelectedPhoto(name); setActiveTab("整改照片"); setToast("已上传图片"); }}>上传图片<small>支持JPG、PNG、BMP</small></button><button onClick={() => { const name = `视频：补充整改视频 ${extraEvidenceCards.length + 1}`; setExtraEvidenceCards((items) => [...items, [name, "视频", "05-16 11:05", "张三", demoMedia.videos.rectificationBeforeAfter]]); setSelectedPhoto(name); setActiveTab("整改照片"); setToast("已上传视频"); }}>上传视频<small>支持MP4、MOV等</small></button></div>
+            <div className="upload-grid"><button onClick={() => { const name = `整改后：补充现场图片 ${extraEvidenceCards.length + 1}`; setExtraEvidenceCards((items) => [...items, [name, "整改后", "05-16 11:00", "张三", demoMedia.images.rectificationAfter]]); setSelectedPhoto(name); setActiveTab("整改照片"); setToast("已上传图片"); }}>上传图片<small>支持JPG、PNG、BMP</small></button><button onClick={() => { const name = `视频：补充整改视频 ${extraEvidenceCards.length + 1}`; setExtraEvidenceCards((items) => [...items, [name, "视频", "05-16 11:05", "张三", demoMedia.videos.rectificationBeforeAfter]]); setSelectedPhoto(name); setActiveTab("整改照片"); setToast("已上传视频"); }}>上传视频<small>支持MP4、MOV等</small></button></div>
           </section>
         </aside>
       </div>
-      {rectifyModal === "upload" && <ActionModal title="上传整改图片" onClose={() => setRectifyModal(null)} footer={<><button className="secondary-btn" onClick={() => setRectifyModal(null)}>取消</button><button className="primary-btn" onClick={() => { const name = `整改后：弹窗上传图片 ${extraEvidenceCards.length + 1}`; setExtraEvidenceCards((items) => [...items, [name, "整改后", "05-16 11:18", "张三", demoMedia.images.rectificationProcess[6]]]); setSelectedPhoto(name); setActiveTab("整改照片"); setRectifyModal(null); setToast("整改图片已上传并加入照片列表"); }}>确认上传</button></>}><div className="upload-grid modal-upload image-only"><button onClick={() => setToast("已选择图片文件")}>上传图片<small>支持 JPG、PNG、BMP</small></button></div></ActionModal>}
+      {rectifyModal === "upload" && <ActionModal title="上传整改图片" onClose={() => setRectifyModal(null)} footer={<><button className="secondary-btn" onClick={() => setRectifyModal(null)}>取消</button><button className="primary-btn" onClick={() => { const name = `整改后：弹窗上传图片 ${extraEvidenceCards.length + 1}`; setExtraEvidenceCards((items) => [...items, [name, "整改后", "05-16 11:18", "张三", demoMedia.images.rectificationAfter]]); setSelectedPhoto(name); setActiveTab("整改照片"); setRectifyModal(null); setToast("整改图片已上传并加入照片列表"); }}>确认上传</button></>}><div className="upload-grid modal-upload image-only"><button onClick={() => setToast("已选择图片文件")}>上传图片<small>支持 JPG、PNG、BMP</small></button></div></ActionModal>}
       {rectifyModal === "reject" && <ActionModal title="退回原因" onClose={() => setRectifyModal(null)} footer={<><button className="secondary-btn" onClick={() => setRectifyModal(null)}>取消</button><button className="primary-btn" onClick={() => { setStatus(activeTab === "企业确认" ? "待复查" : "整改中"); setActiveTab(activeTab === "企业确认" ? "复查验收" : "整改信息"); setRectifyModal(null); setToast("已退回整改并记录原因"); }}>确认退回</button></>}><div className="modal-form"><label><span>原因</span><input defaultValue="需补充整改照片或完善现场说明" /></label></div></ActionModal>}
       {rectifyModal === "sign" && <ActionModal title="电子签名" onClose={() => setRectifyModal(null)} footer={<><button className="secondary-btn" onClick={() => setRectifyModal(null)}>取消</button><button className="primary-btn" onClick={() => { setConfirmSigned(true); setRectifyModal(null); setToast("电子签名已完成"); }}>确认签名</button></>}><div className="signature-preview">王磊</div></ActionModal>}
       {rectifyModal === "material" && <ActionModal title="补充材料要求" onClose={() => setRectifyModal(null)} footer={<><button className="secondary-btn" onClick={() => setRectifyModal(null)}>取消</button><button className="primary-btn" onClick={() => { setStatus("待补充材料"); setRectifyModal(null); setToast("已要求补充材料"); }}>发送要求</button></>}><div className="modal-form"><label><span>材料要求</span><input defaultValue="补充企业确认函盖章页和门锁细节照片" /></label></div></ActionModal>}
@@ -2147,7 +2142,7 @@ function HazardStatisticsPage({ setView, setToast }: { setView: (view: HazardVie
   ];
   const topUnits = [["齐鲁科技园", "268"], ["消防运维服务部", "214"], ["智慧产业园", "178"], ["用电安全管理部", "132"], ["国控管理中心", "108"], ["综合管理部", "86"], ["物业服务中心", "82"], ["设备运维部", "74"], ["工程管理部", "61"], ["鲁商广场", "51"]];
   return (
-    <div className="hazard-dashboard-page">
+    <div className="hazard-dashboard-page demo-hazard-page">
       <div className="dashboard-filter-line">
         <SelectBox label="项目/园区" value={statProject} options={["全部项目/园区", "齐鲁科技园", "国控大厦项目"].map(toOption)} onChange={(value) => { setStatProject(value); setToast(`已筛选项目/园区：${value}`); }} />
         <label><span>开始日期</span><input type="date" value={statStart} onChange={(event) => setStatStart(event.target.value)} /></label>
@@ -2163,7 +2158,7 @@ function HazardStatisticsPage({ setView, setToast }: { setView: (view: HazardVie
       <div className="hazard-kpi-grid">{kpis.map(([label, value, trend, tone]) => <button key={label} className={`hazard-kpi ${tone}`} onClick={() => label.includes("超期") ? setView("overdue") : setView("rectification")}><i /> <span>{label}</span><strong>{value}</strong><small>环比上月 <b>{trend}</b></small></button>)}</div>
       <div className="dashboard-grid">
         <div className="dashboard-analysis-row">
-        <section className="dashboard-card wide chart-fixed"><header><h3>隐患趋势分析</h3><div><button className="active" onClick={() => setToast("已切换日视图")}>日</button><button onClick={() => setToast("已切换周视图")}>周</button><button onClick={() => setToast("已切换月视图")}>月</button><button onClick={() => setView("rectification")}>更多</button></div></header><LineCard data={riskTrend} colors={["#2f80ed", "#18a863", "#f6b500"]} keys={["高风险", "较高风险", "中风险"]} xKey="day" /></section>
+        <section className="dashboard-card wide chart-fixed"><header><h3>隐患趋势分析</h3><div><button className="active" onClick={() => setToast("已切换日视图")}>日</button><button onClick={() => setToast("已切换周视图")}>周</button><button onClick={() => setToast("已切换月视图")}>月</button><button onClick={() => setView("rectification")}>更多</button></div></header><LineCard data={riskTrend} colors={["var(--accent-blue)", "var(--risk-green-text)", "var(--yellow)"]} keys={["高风险", "较高风险", "中风险"]} xKey="day" /></section>
         <section className="dashboard-card"><header><h3>责任单位隐患排行 TOP10</h3><button onClick={() => setView("rectification")}>更多</button></header><div className="rank-bars">{topUnits.map(([name, value], index) => <p key={name}><span>{index + 1}</span><b>{name}</b><i style={{ width: `${Math.max(18, Number(value) / 3)}%` }} /><em>{value}</em></p>)}</div></section>
         </div>
         <div className="dashboard-chart-row">
@@ -2175,7 +2170,7 @@ function HazardStatisticsPage({ setView, setToast }: { setView: (view: HazardVie
         <section className="dashboard-card"><header><h3>闭环效率分析</h3><button onClick={() => setToast("已打开闭环效率明细")}>更多</button></header><div className="efficiency-grid">{[["平均整改时长", "4.6天", "↓ 0.6天"], ["复查通过率", "87.6%", "↑ 4.3%"], ["专家复核次数", "126次", "↑ 12.5%"], ["闭环率", "92.1%", "↑ 5.4%"]].map((item) => <MiniStat key={item[0]} label={`${item[0]} ${item[2]}`} value={item[1]} />)}</div></section>
         </div>
         <div className="dashboard-table-row">
-        <section className="dashboard-card wide"><header><h3>重点隐患清单</h3><button onClick={() => setView("rectification")}>进入闭环</button></header><DataTable headers={["隐患编号", "隐患描述", "所属项目", "隐患类型", "风险等级", "责任单位", "整改状态", "超期天数", "发现时间", "操作"]} rows={[["YH20250516001", "配电箱门未关闭，存在触电风险", "齐鲁科技园", "用电安全", "高风险", "齐鲁科技园", "整改中", "5", "2025-05-16 10:31", "查看详情"], ["YH20250515023", "灭火器压力不足", "智慧产业园", "消防安全", "中风险", "物业服务中心", "整改中", "3", "2025-05-15 14:22", "查看详情"], ["YH20250514017", "临时用电线路敷设不规范", "鲁商广场", "临时用电", "中风险", "工程管理部", "待复查", "0", "2025-05-14 09:48", "查看详情"]]} /></section>
+        <section className="dashboard-card wide"><header><h3>重点隐患清单</h3><button onClick={() => setView("rectification")}>进入闭环</button></header><DataTable headers={["隐患编号", "隐患描述", "所属项目", "隐患类型", "风险等级", "责任单位", "整改状态", "超期天数", "发现时间", "操作"]} rows={[["YH20250516001", "配电箱门未关闭，存在触电风险", "齐鲁科技园", "用电安全", "高风险", "齐鲁科技园", "整改中", "5", "2025-05-16 10:31", "查看详情"], ["YH20250515023", "灭火器压力待核查", "智慧产业园", "消防安全", "中风险", "物业服务中心", "整改中", "3", "2025-05-15 14:22", "查看详情"], ["YH20250514017", "临时用电线路敷设不规范", "鲁商广场", "临时用电", "中风险", "工程管理部", "待复查", "0", "2025-05-14 09:48", "查看详情"]]} /></section>
         </div>
       </div>
     </div>
@@ -2194,7 +2189,7 @@ function HazardOverduePage({ setToast }: { setToast: (message: string) => void }
   const [evidencePreview, setEvidencePreview] = useState<MediaPreview | null>(null);
   const [rows, setRows] = useState([
     ["RPT20250516001", "配电箱未关闭，存在触电风险", "齐鲁科技园", "高风险", "齐鲁科技园", "张三", "2025-05-09", "7天", "待整改", "2025-05-15 10:30"],
-    ["RPT20250515045", "灭火器压力不足", "齐鲁科技园", "高风险", "齐鲁科技园", "李四", "2025-05-08", "8天", "已催办", "2025-05-14 14:20"],
+    ["RPT20250515045", "灭火器压力待核查", "齐鲁科技园", "高风险", "齐鲁科技园", "李四", "2025-05-08", "8天", "已催办", "2025-05-14 14:20"],
     ["RPT20250516023", "应急照明损坏", "鲁商广场", "中风险", "鲁商广场", "王五", "2025-05-19", "2天", "即将超期", "-"],
     ["RPT20250514032", "线路裸露，绝缘防护不足", "山东国控大数据中心", "高风险", "数据中心运维部", "赵六", "2025-05-07", "9天", "待整改", "2025-05-13 09:15"],
     ["RPT20250513018", "消防通道堆放杂物", "国控大厦项目", "中风险", "后勤保障部", "周七", "2025-05-06", "10天", "已催办", "2025-05-12 16:45"],
@@ -2246,9 +2241,9 @@ function HazardOverduePage({ setToast }: { setToast: (message: string) => void }
   const countTab = (tab: string) => rows.filter((row) => matchTab(row, tab)).length;
   const drawerEvidence = [
     { title: "配电箱未关闭", src: demoMedia.images.electricalPanelOpen },
-    { title: "线缆裸露", src: demoMedia.images.cableExposed },
+    { title: "线缆防护待核查", src: demoMedia.images.cableExposed },
     { title: "消防通道占用", src: demoMedia.images.fireCorridorBlocked },
-    { title: "灭火器压力不足", src: demoMedia.images.extinguisherLowPressure },
+    { title: "灭火器压力待核查", src: demoMedia.images.extinguisherLowPressure },
     { title: "现场复查照片", src: demoMedia.images.rectificationAfter }
   ];
   const resetFilters = () => {
@@ -2277,7 +2272,7 @@ function HazardOverduePage({ setToast }: { setToast: (message: string) => void }
   };
 
   return (
-    <div className="overdue-warning-page">
+    <div className="overdue-warning-page demo-hazard-page">
       <div className={`overdue-shell ${current ? "detail-open" : ""}`}>
         <main className="overdue-main">
           <div className="overdue-kpis">
@@ -2346,7 +2341,7 @@ type HelmetLiveState = { deviceId: string; deviceName: string; online: boolean; 
 type HelmetDetection = { id: string; candidateId?: string; hazardName: string; category: string; riskLevel: HelmetRiskLevel; confidence: number; bbox?: HelmetBBox; description: string; rectificationSuggestion: string; needExpertReview: boolean };
 type HelmetAnalysis = { analysisId: string; deviceId: string; taskId: string; captureTime: string; hasHazard: boolean; overallRiskLevel: HelmetRiskLevel; summary: string; detections: HelmetDetection[]; candidates?: (HelmetDetection & { candidateId: string; status: string })[]; provider: string };
 type RectificationResult = { suggestions: string[]; basisKeywords: string[]; needExpertReview: boolean };
-type HelmetModelStatus = { provider: string; analysisId?: string; summary?: string; captureTime?: string; detections: number; loading: boolean; boxes: HelmetSuspectedHazard[] };
+type HelmetModelStatus = { frameSrc?: string; provider: string; analysisId?: string; summary?: string; captureTime?: string; detections: number; loading: boolean; boxes: HelmetSuspectedHazard[] };
 
 const deviceStatus: HelmetStatusItem[] = [
   { label: "安全帽编号", value: "AAS-20250516-001" },
@@ -2379,14 +2374,14 @@ const checklist: HelmetChecklistItem[] = [
 
 const suspectedHazards: HelmetSuspectedHazard[] = [
   { key: "panel", name: "配电箱未关闭", time: "15:04:12", confidence: "0.94", risk: "高风险", boxClass: "box-panel", evidence: demoMedia.images.electricalPanelOpen },
-  { key: "cable", name: "线缆裸露", time: "15:04:15", confidence: "0.89", risk: "高风险", boxClass: "box-cable", evidence: demoMedia.images.cableExposed },
-  { key: "extinguisher", name: "灭火器压力不足", time: "15:04:18", confidence: "0.91", risk: "中风险", boxClass: "box-extinguisher", evidence: demoMedia.images.extinguisherLowPressure }
+  { key: "cable", name: "线缆防护待核查", time: "15:04:15", confidence: "0.89", risk: "高风险", boxClass: "box-cable", evidence: demoMedia.images.cableExposed },
+  { key: "extinguisher", name: "灭火器压力待核查", time: "15:04:18", confidence: "0.91", risk: "中风险", boxClass: "box-extinguisher", evidence: demoMedia.images.extinguisherLowPressure }
 ];
 
 const hazardRecords: HelmetHazardRecord[] = [
   { id: "YH20250516001-001", key: "panel", desc: "配电箱门未关闭", risk: "高风险", status: "待派发", foundTime: "2025-05-16 15:04:12" },
-  { id: "YH20250516001-002", key: "cable", desc: "线缆裸露，未做绝缘防护", risk: "高风险", status: "待派发", foundTime: "2025-05-16 15:04:15" },
-  { id: "YH20250516001-003", key: "extinguisher", desc: "灭火器压力不足", risk: "中风险", status: "待复查", foundTime: "2025-05-16 15:04:18" },
+  { id: "YH20250516001-002", key: "cable", desc: "线缆防护待核查，未做绝缘防护", risk: "高风险", status: "待派发", foundTime: "2025-05-16 15:04:15" },
+  { id: "YH20250516001-003", key: "extinguisher", desc: "灭火器压力待核查", risk: "中风险", status: "待复查", foundTime: "2025-05-16 15:04:18" },
   { id: "YH20250516001-004", key: "dust", desc: "配电箱内灰尘较多", risk: "低风险", status: "待整改", foundTime: "2025-05-16 15:10:22" },
   { id: "YH20250516001-005", key: "ground", desc: "接地线标识不清晰", risk: "低风险", status: "已整改", foundTime: "2025-05-16 15:12:45" }
 ];
@@ -2515,14 +2510,16 @@ function HelmetLivePage({ setToast, navigate }: { setToast: (message: string) =>
   const [moreOpen, setMoreOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
   const [modelStatus, setModelStatus] = useState<HelmetModelStatus>({ provider: "读取中", detections: 0, loading: true, boxes: [] });
-  const visibleHazards = modelStatus.provider === "yolo" ? modelStatus.boxes : suspectedHazards;
+  const frameSrc = infrared ? sceneImages.infraredOverheat : (suspectedHazards.find(item => item.key === activeHazardKey)?.evidence ?? sceneImages.electricalPanelOpen);
+  const visibleHazards = modelStatus.provider === "yolo" && modelStatus.frameSrc === frameSrc ? modelStatus.boxes : suspectedHazards;
   const activeHazard = visibleHazards.find((item) => item.key === activeHazardKey) ?? visibleHazards[0] ?? suspectedHazards[0];
   const activeChecklist = checklist.find((item) => item.id === activeChecklistId) ?? checklist[1];
   const allHazards = [...screenshots, ...hazards];
   const helmetProjectOptions = ["全部项目", ...Array.from(new Set(helmetDeviceOptions.map((item) => item.project)))];
   const filteredHelmetDevices = helmetDeviceOptions.filter((item) => project === "全部项目" || item.project === project);
-  const updateModelStatus = (analysis: HelmetAnalysis | null) => {
+  const updateModelStatus = (analysis: HelmetAnalysis | null, analyzedFrame?: string) => {
     setModelStatus({
+      frameSrc: analyzedFrame,
       provider: analysis?.provider ?? "未分析",
       analysisId: analysis?.analysisId,
       captureTime: analysis?.captureTime,
@@ -2542,14 +2539,14 @@ function HelmetLivePage({ setToast, navigate }: { setToast: (message: string) =>
   const verifyYoloModel = async () => {
     setModelStatus((current) => ({ ...current, loading: true }));
     try {
-      const frameBase64 = await imageAssetToDataUrl(infrared ? demoMedia.images.infraredOverheat : demoMedia.images.hotWorkTempPower);
+      const frameBase64 = await imageAssetToDataUrl(frameSrc);
       const analysis = await apiPost<HelmetAnalysis>("/vision/analyze-frame", {
         deviceId: "SHM20250516001",
         taskId: "TASK20250516001",
         captureTime: new Date().toISOString(),
         frameBase64
       });
-      updateModelStatus(analysis);
+      updateModelStatus(analysis, frameSrc);
       setToast(`已调用模型：${formatProviderName(analysis.provider)}`);
     } catch (error) {
       setModelStatus({ provider: "调用失败", detections: 0, loading: false, boxes: [], summary: error instanceof Error ? error.message : "模型调用失败" });
@@ -2586,12 +2583,12 @@ function HelmetLivePage({ setToast, navigate }: { setToast: (message: string) =>
   };
   const chooseHazard = (item: HelmetSuspectedHazard) => {
     setActiveHazardKey(item.key);
-    setToast(`已高亮识别框：${item.name}`);
+    setToast(`已切换场景参考：${item.name}`);
   };
   const openMoreAction = (action: string) => {
     setMoreOpen(false);
     if (action === "download") {
-      downloadAsset(demoMedia.videos.helmetLive, "helmet_live_clip.mp4");
+      downloadAsset(demoMedia.videos.helmetLive, "helmet_scene_slideshow.webm");
       setToast("视频片段已下载");
       return;
     }
@@ -2612,7 +2609,7 @@ function HelmetLivePage({ setToast, navigate }: { setToast: (message: string) =>
           <QuickActionsCard hdMode={hdMode} talking={talking} lightOn={lightOn} onToggleHd={() => { setHdMode((value) => !value); setToast(hdMode ? "已切换为标准视频" : "已切换为高清视频"); }} onScreenshot={captureScreenshot} onTalk={() => { setTalking((value) => !value); setToast(talking ? "语音对讲已关闭" : "语音对讲中"); }} onLight={() => { setLightOn((value) => !value); setToast(lightOn ? "补光灯已关闭" : "补光灯已开启"); }} onSos={() => setSosOpen(true)} />
         </aside>
         <main className="helmet-main-stack">
-          <LiveVideoPanel activeHazardKey={activeHazardKey} hdMode={hdMode} recording={recording} talking={talking} infrared={infrared} lightOn={lightOn} retakeMode={retakeMode} suspectedHazards={visibleHazards} checklistItem={activeChecklist} modelStatus={modelStatus} onVerifyModel={verifyYoloModel} onScreenshot={captureScreenshot} onRecord={() => { setRecording((value) => !value); setToast(recording ? "录制已停止" : "现场录制已开始"); }} onTalk={() => { setTalking((value) => !value); setToast(talking ? "对讲已释放" : "正在对讲"); }} onInfrared={() => { setInfrared((value) => !value); setToast(infrared ? "已切回普通画面" : "已切换红外模式"); }} onLight={() => { setLightOn((value) => !value); setToast(lightOn ? "补光灯已关闭" : "补光灯已开启"); }} moreOpen={moreOpen} setMoreOpen={setMoreOpen} onMoreAction={openMoreAction} onPreview={() => setPreview({ title: `${device} 第一视角视频`, type: "video", src: demoMedia.videos.helmetLive })} />
+          <LiveVideoPanel frameSrc={frameSrc} activeHazardKey={activeHazardKey} hdMode={hdMode} recording={recording} talking={talking} infrared={infrared} lightOn={lightOn} retakeMode={retakeMode} suspectedHazards={visibleHazards} checklistItem={activeChecklist} modelStatus={modelStatus} onVerifyModel={verifyYoloModel} onScreenshot={captureScreenshot} onRecord={() => { setRecording((value) => !value); setToast(recording ? "录制已停止" : "现场录制已开始"); }} onTalk={() => { setTalking((value) => !value); setToast(talking ? "对讲已释放" : "正在对讲"); }} onInfrared={() => { setInfrared((value) => !value); setToast(infrared ? "已切回普通画面" : "已切换红外模式"); }} onLight={() => { setLightOn((value) => !value); setToast(lightOn ? "补光灯已关闭" : "补光灯已开启"); }} moreOpen={moreOpen} setMoreOpen={setMoreOpen} onMoreAction={openMoreAction} onPreview={() => setPreview({ title: `${device} 场景参考`, type: "image", src: frameSrc })} />
           <TimelinePanel timelineSegments={timelineSegments} />
           <HazardRecordTable records={allHazards} activeKey={activeHazardKey} onFocus={(record) => { setActiveHazardKey(record.key); setDetail(record); }} onGenerate={generateOrder} onDispatch={dispatchRecord} />
         </main>
@@ -2679,12 +2676,12 @@ function QuickActionsCard({ hdMode, talking, lightOn, onToggleHd, onScreenshot, 
   );
 }
 
-function LiveVideoPanel({ activeHazardKey, hdMode, recording, talking, infrared, lightOn, retakeMode, suspectedHazards, checklistItem, modelStatus, onVerifyModel, onScreenshot, onRecord, onTalk, onInfrared, onLight, moreOpen, setMoreOpen, onMoreAction, onPreview }: { activeHazardKey: string; hdMode: boolean; recording: boolean; talking: boolean; infrared: boolean; lightOn: boolean; retakeMode: boolean; suspectedHazards: HelmetSuspectedHazard[]; checklistItem: HelmetChecklistItem; modelStatus: HelmetModelStatus; onVerifyModel: () => void; onScreenshot: () => void; onRecord: () => void; onTalk: () => void; onInfrared: () => void; onLight: () => void; moreOpen: boolean; setMoreOpen: (value: boolean) => void; onMoreAction: (action: string) => void; onPreview: () => void }) {
-  const isYoloResult = modelStatus.provider === "yolo";
+function LiveVideoPanel({ frameSrc, activeHazardKey, hdMode, recording, talking, infrared, lightOn, retakeMode, suspectedHazards, checklistItem, modelStatus, onVerifyModel, onScreenshot, onRecord, onTalk, onInfrared, onLight, moreOpen, setMoreOpen, onMoreAction, onPreview }: { frameSrc: string; activeHazardKey: string; hdMode: boolean; recording: boolean; talking: boolean; infrared: boolean; lightOn: boolean; retakeMode: boolean; suspectedHazards: HelmetSuspectedHazard[]; checklistItem: HelmetChecklistItem; modelStatus: HelmetModelStatus; onVerifyModel: () => void; onScreenshot: () => void; onRecord: () => void; onTalk: () => void; onInfrared: () => void; onLight: () => void; moreOpen: boolean; setMoreOpen: (value: boolean) => void; onMoreAction: (action: string) => void; onPreview: () => void }) {
+  const isYoloResult = modelStatus.provider === "yolo" && modelStatus.frameSrc === frameSrc;
   const hasYoloBoxes = isYoloResult && modelStatus.boxes.length > 0;
   return (
     <section className="helmet-video-panel">
-      <header><h2><VideoIcon />实时视频画面（AI识别中）</h2><div><span className="live-pill">直播中</span><span>分辨率：{hdMode ? "1080P" : "720P"}</span><button onClick={onPreview}><Maximize size={16} /></button></div></header>
+      <header><h2><VideoIcon />场景参考与识别验证</h2><div><span className="live-pill">静态演示素材</span><span>{hdMode ? "原图预览" : "适配预览"}</span><button onClick={onPreview}><Maximize size={16} /></button></div></header>
       <div className={`helmet-model-proof ${providerTone(modelStatus.provider)}`}>
         <div>
           <span>当前识别引擎</span>
@@ -2695,10 +2692,10 @@ function LiveVideoPanel({ activeHazardKey, hdMode, recording, talking, infrared,
         <button className="secondary-btn" onClick={onVerifyModel} disabled={modelStatus.loading}>{modelStatus.loading ? "验证中" : "验证 YOLO 模型"}</button>
       </div>
       <div className={`helmet-video-frame ${infrared ? "thermal" : ""} ${retakeMode ? "retake" : ""}`}>
-        <img src={infrared ? demoMedia.images.infraredOverheat : demoMedia.images.hotWorkTempPower} alt="智能安全帽第一视角实时画面" />
-        <div className="helmet-video-hud"><span>{checklistItem.name}</span><b>{retakeMode ? "补拍中" : "AI Tracking"}</b></div>
+        <img src={frameSrc} alt="安全检查场景参考图" />
+        <div className="helmet-video-hud"><span>{checklistItem.name}</span><b>{retakeMode ? "补拍流程演示" : "场景参考"}</b></div>
         {isYoloResult && suspectedHazards.length === 0 && <div className="helmet-yolo-empty">当前 YOLO26n COCO 模型未识别到配置类别目标；它不包含 fire_extinguisher 灭火器专用类别。</div>}
-        {suspectedHazards.map((item) => {
+        {(isYoloResult ? suspectedHazards : []).map((item) => {
           const bboxStyle = item.bbox ? { left: `${item.bbox.x * 100}%`, top: `${item.bbox.y * 100}%`, width: `${item.bbox.w * 100}%`, height: `${item.bbox.h * 100}%` } : undefined;
           return <button key={item.key} style={bboxStyle} className={`helmet-ai-box ${item.boxClass} ${hasYoloBoxes ? "from-yolo" : ""} ${activeHazardKey === item.key ? "active" : ""}`} onClick={() => onMoreAction("history")}><strong>{item.name}</strong><span>置信度：{item.confidence}</span></button>;
         })}
@@ -2777,7 +2774,7 @@ const knowledgeBases: KnowledgeBaseItem[] = [
 
 const hazardGraphs = {
   center: "配电箱未关闭",
-  nodes: ["电气火灾", "触电风险", "线缆裸露", "接地异常", "管理责任", "整改建议"],
+  nodes: ["电气火灾", "触电风险", "线缆防护待核查", "接地异常", "管理责任", "整改建议"],
   metrics: [
     ["已建图谱", "50 类"],
     ["关联标准", "186 条"],
@@ -3015,7 +3012,7 @@ function InspectionTemplatesPage({ setToast }: { setToast: (message: string) => 
           </section>
         </div>
       ) : (
-        <section className="module-list-card knowledge-result-list">{["配电箱未关闭识别规则", "消防通道占用图谱", "灭火器压力不足规则", "动火临电知识条目"].map((item, index) => <button key={item} onClick={() => setToast(`已打开${item}`)}><SlidersHorizontal size={16} />{item}<span>{activeTab} #{index + 1}</span></button>)}</section>
+        <section className="module-list-card knowledge-result-list">{["配电箱未关闭识别规则", "消防通道占用图谱", "灭火器压力待核查规则", "动火临电知识条目"].map((item, index) => <button key={item} onClick={() => setToast(`已打开${item}`)}><SlidersHorizontal size={16} />{item}<span>{activeTab} #{index + 1}</span></button>)}</section>
       )}
       {previewOpen && <ActionModal title="模板预览" onClose={() => setPreviewOpen(false)} footer={<button className="primary-btn" onClick={() => setPreviewOpen(false)}>确认</button>}><DataTable headers={["检查项", "检查内容", "风险等级"]} rows={rows.map((row) => [row.item, row.content, row.risk])} /></ActionModal>}
     </section>
@@ -3043,11 +3040,7 @@ function ExpertPage({ setToast, navigate }: { setToast: (message: string) => voi
   const [ptzOpen, setPtzOpen] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [minutesId, setMinutesId] = useState("");
-  const [annotations, setAnnotations] = useState<ExpertAnnotation[]>([
-    { id: "ai-panel", type: "矩形", className: "panel-box", label: "配电箱未关闭\n高风险" },
-    { id: "ai-cable", type: "矩形", className: "cable-box", label: "线缆裸露\n高风险" },
-    { id: "ai-extinguisher", type: "矩形", className: "extinguisher-box", label: "灭火器压力不足\n中风险" }
-  ]);
+  const [annotations, setAnnotations] = useState<ExpertAnnotation[]>([]);
   const [preview, setPreview] = useState<MediaPreview | null>(null);
   const focusedHazard = hazards.find((item) => item.focused) ?? hazards[0];
 
@@ -3060,7 +3053,7 @@ function ExpertPage({ setToast, navigate }: { setToast: (message: string) => voi
     setActiveChannel(channel);
     setSelectedSnapshotId(expertScreenshots[0].id);
     setToast(`已切换到${channel.project}${channel.point}视频`);
-    if (channel.status === "直播中") await showAdapterResult(openHelmetStream(channel.deviceId));
+
   };
 
   const addMessage = (text: string, speaker = "王工") => {
@@ -3078,7 +3071,7 @@ function ExpertPage({ setToast, navigate }: { setToast: (message: string) => voi
   };
 
   const captureSnapshot = () => {
-    const next = { id: `shot-${Date.now()}`, time: "10:31:18", src: activeChannel.thumbnail };
+    const next: ExpertSnapshot = { id: `shot-${Date.now()}`, time: "10:31:18", src: activeChannel.thumbnail, title: activeChannel.point, sourceNote: "演示频道封面 · 模拟截图" };
     setSnapshots((items) => [next, ...items].slice(0, 8));
     setSelectedSnapshotId(next.id);
     setToast("截图已保存");
@@ -3123,7 +3116,7 @@ function ExpertPage({ setToast, navigate }: { setToast: (message: string) => voi
     <section className="expert-workstation embedded">
       <main className="expert-main">
         <header className="expert-topbar">
-          <div className="expert-title-block"><h1>远程专家端</h1><span>实时视频查看</span></div>
+          <div className="expert-title-block"><h1>远程专家端</h1><span>远程会诊工作台</span><small className="expert-demo-label">演示模式</small></div>
           <div className="expert-meta"><span>专家：王工</span><span>专家类型：电气安全专家</span><b><i />在线</b></div>
           <div className="expert-top-actions">
             <button onClick={() => setToast("消息中心已打开")}><Bell size={18} />消息<em>6</em></button>
@@ -3135,15 +3128,15 @@ function ExpertPage({ setToast, navigate }: { setToast: (message: string) => voi
         </header>
 
         <section className="expert-channel-strip">
-          {videoChannels.map((channel) => <button key={channel.id} className={activeChannel.id === channel.id ? "active" : ""} onClick={() => switchChannel(channel)}><strong>{channel.index}</strong><img src={channel.thumbnail} alt={channel.point} /><div><span className={channel.status === "直播中" ? "live-dot" : "offline-dot"}>{channel.status}</span><b>{channel.project}<br />{channel.point}</b><small>检查员：{channel.inspector}</small><small>{channel.time}</small><em className={`risk-pill ${channel.risk === "高风险" ? "danger" : channel.risk === "中风险" ? "warning" : channel.risk === "低风险" ? "safe" : "muted"}`}>{channel.risk === "-" ? "无风险" : channel.risk}</em></div></button>)}
+          {videoChannels.map((channel) => <button key={channel.id} className={activeChannel.id === channel.id ? "active" : ""} onClick={() => switchChannel(channel)}><strong>{channel.index}</strong><img src={channel.thumbnail} alt={channel.point} /><div><span className={channel.status === "演示回放" ? "live-dot" : "offline-dot"}>{channel.status}</span><b>{channel.project}<br />{channel.point}</b><small>检查员：{channel.inspector}</small><small>{channel.time}</small><em className={`risk-pill ${channel.risk === "高风险" ? "danger" : channel.risk === "中风险" ? "warning" : channel.risk === "低风险" ? "safe" : "muted"}`}>{channel.risk === "-" ? "无风险" : channel.risk}</em></div></button>)}
         </section>
 
         <div className="expert-console-grid">
           <section className="expert-video-stage">
-            <header><h2>实时视频查看（{activeChannel.project} {activeChannel.point}）</h2><span>设备：{activeChannel.deviceId}</span><span>检查员：{activeChannel.inspector}</span></header>
+            <header><h2>场景演示（{activeChannel.project} {activeChannel.point}）</h2><span>设备：{activeChannel.deviceId}</span><span>检查员：{activeChannel.inspector}</span></header>
             <div className="expert-video-frame">
-              <video src={activeChannel.video} poster={activeChannel.thumbnail} muted={muted} autoPlay loop playsInline />
-              <div className="video-stats"><span>分辨率：{activeChannel.resolution}</span><span>码率：{activeChannel.bitrate}</span><span>延迟：{activeChannel.latency}</span><span>设备：{activeChannel.deviceId}</span><span>检查员：{activeChannel.inspector}</span></div>
+              {activeChannel.status === "离线" ? <img className="expert-offline-poster" src={activeChannel.thumbnail} alt={`${activeChannel.point}参考图`} /> : <video key={activeChannel.id} src={activeChannel.video} poster={activeChannel.thumbnail} muted={muted} autoPlay loop playsInline />}
+              <div className="video-stats"><span>{activeChannel.status === "离线" ? "离线示例 · 暂无现场视频" : "图片轮播演示 · 非现场录像"}</span><span>设备：{activeChannel.deviceId}</span><span>检查员：{activeChannel.inspector}</span></div>
               <div className="annotation-tools">
                 {[["箭头", Target], ["矩形", CheckSquare], ["圆形", CircleHelp], ["画笔", SlidersHorizontal], ["文字", FileText], ["马赛克", LayoutDashboard]].map(([label, Icon]) => <button key={label as string} onClick={() => label === "矩形" || label === "圆形" || label === "文字" ? addAnnotation(label as ExpertAnnotation["type"]) : setToast(`已选择${label}工具`)}><Icon size={17} />{label as string}</button>)}
                 <button onClick={() => { setAnnotations((items) => items.slice(0, -1)); setToast("已撤销最后一个标注"); }}><ChevronLeft size={17} />撤销</button>
@@ -3179,7 +3172,11 @@ function ExpertPage({ setToast, navigate }: { setToast: (message: string) => voi
         </div>
 
         <section className="expert-bottom-grid">
-          <article className="expert-bottom-card snapshots"><header><h3>截图 / 关键帧列表</h3><button onClick={() => setToast("关键帧列表已展开")}><ChevronRight size={18} /></button></header><div>{snapshots.map((shot) => <button key={shot.id} className={selectedSnapshotId === shot.id ? "active" : ""} onClick={() => { setSelectedSnapshotId(shot.id); setPreview({ title: `关键帧 ${shot.time}`, type: "image", src: shot.src }); setToast("已切换关键帧"); }}><img src={shot.src} alt={shot.time} /><span>{shot.time}</span></button>)}</div></article>
+          <article className="expert-bottom-card snapshots">
+            <header><h3>截图 / 关键帧列表</h3><small>演示素材</small></header>
+            <div>{snapshots.map((shot) => <button key={shot.id} className={selectedSnapshotId === shot.id ? "active" : ""} title={`${shot.title} · ${shot.sourceNote}`} aria-label={`查看${shot.title} ${shot.time}`} aria-pressed={selectedSnapshotId === shot.id} onClick={() => { setSelectedSnapshotId(shot.id); setPreview({ title: `${shot.title} · ${shot.time}`, type: "image", src: shot.src, caption: shot.sourceNote }); }}><img src={shot.src} alt={shot.title} /><span>{shot.time}</span></button>)}</div>
+            <p className="snapshot-source-note">参考素材 · 点击查看大图与来源</p>
+          </article>
           <article className="expert-bottom-card chat"><h3>对话记录</h3><div>{messages.map((message, index) => <p key={`${message.time}-${index}`}><time>{message.time}</time><b>{message.speaker}：</b><span>{message.text}</span></p>)}</div></article>
           <article className="expert-bottom-card task"><h3>检查任务信息</h3><dl><dt>任务编号</dt><dd>{taskInfo.id}</dd><dt>任务名称</dt><dd>{taskInfo.name}</dd><dt>检查人员</dt><dd>{taskInfo.inspector}</dd><dt>检查时间</dt><dd>{taskInfo.time}</dd><dt>检查地点</dt><dd>{taskInfo.location}</dd><dt>任务状态</dt><dd><Badge label={taskInfo.status} /></dd></dl></article>
         </section>
@@ -3204,9 +3201,9 @@ function ReportsGeneratePage({ setToast }: { setToast: (message: string) => void
   const [reportStatus, setReportStatus] = useState("草稿");
   const evidenceChain = [
     { title: "配电箱未关闭", src: demoMedia.images.electricalPanelOpen },
-    { title: "线缆裸露", src: demoMedia.images.cableExposed },
+    { title: "线缆防护待核查", src: demoMedia.images.cableExposed },
     { title: "消防通道占用", src: demoMedia.images.fireCorridorBlocked },
-    { title: "灭火器压力不足", src: demoMedia.images.extinguisherLowPressure },
+    { title: "灭火器压力待核查", src: demoMedia.images.extinguisherLowPressure },
     { title: "整改后照片", src: demoMedia.images.rectificationAfter }
   ];
   const exportReport = () => {
@@ -3228,7 +3225,7 @@ function ReportsGeneratePage({ setToast }: { setToast: (message: string) => void
         <div className="module-actions"><button className="primary-btn" onClick={() => { setReportStatus("已生成"); setToast("报告已生成"); }}>生成报告</button><button className="secondary-btn" onClick={exportReport}>导出报告</button></div>
       </div>
       <div className="report-layout">
-        <section className="report-preview-card"><img src={demoMedia.images.reportCenterPages} alt="报告页面预览" /><Badge label={reportStatus} /></section>
+        <section className="report-preview-card report-document"><header><small>演示检查报告</small><Badge label={reportStatus} /></header><h2>消防与用电安全检查报告</h2><p>本报告展示所选检查项目及参考素材，结论以现场核查和专家复核为准。</p><h3>检查材料（{selected.length} 项）</h3>{evidenceChain.filter(item => selected.includes(item.title)).map(item => <figure key={item.title}><img src={item.src} alt={item.title} /><figcaption>{item.title}<small>{getMediaSourceNote(item.src)}</small></figcaption></figure>)}{!selected.length && <p>请在右侧选择检查材料。</p>}<h3>复核意见</h3><p>待补充现场照片、责任人及复核记录。</p></section>
         <aside className="media-side-card">
           <header><h3>证据链归档</h3><button onClick={() => setToast("证据材料已打包下载")}>全部下载</button></header>
           <div className="media-evidence-grid">
@@ -3251,7 +3248,7 @@ function GenericModulePage({ page, navigate }: { page: PageKey; navigate: (page:
   return (
     <section className="module-page">
       <div className="module-hero"><div className="module-icon"><LayoutDashboard size={30} /></div><div><h2>{pageTitles[page]}</h2><p>该模块服务于客户管理、项目管理、设备管理、专家协同、报告归档和运营分析等后台能力。</p></div><div className="module-actions"><button className="primary-btn" onClick={() => navigate("dashboard", "已返回运营工作台")}>返回工作台</button><button className="secondary-btn" onClick={() => navigate("reports", "已进入报告中心")}>生成报告</button></div></div>
-      <div className="module-grid"><Panel title={`${pageTitles[page]}列表`} onMore={() => navigate("dashboard", "已回到运营工作台查看汇总")}><DataTable headers={table.headers} rows={table.rows} /></Panel><Panel title="业务趋势" onMore={() => navigate("analytics", "已打开数据看板")}><LineCard data={riskTrend} colors={["#2f80ed", "#18a863"]} keys={["较高风险", "低风险"]} xKey="day" /></Panel></div>
+      <div className="module-grid"><Panel title={`${pageTitles[page]}列表`} onMore={() => navigate("dashboard", "已回到运营工作台查看汇总")}><DataTable headers={table.headers} rows={table.rows} /></Panel><Panel title="业务趋势" onMore={() => navigate("analytics", "已打开数据看板")}><LineCard data={riskTrend} colors={["var(--accent-blue)", "var(--risk-green-text)"]} keys={["较高风险", "低风险"]} xKey="day" /></Panel></div>
     </section>
   );
 }
@@ -3261,7 +3258,7 @@ function RectificationChart() {
   return (
     <div className="donut-layout">
       <div className="donut-chart">
-        <ResponsiveContainer><PieChart><Pie data={rectification} dataKey="value" nameKey="name" innerRadius="56%" outerRadius="82%" paddingAngle={2} isAnimationActive={false}>{rectification.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie></PieChart></ResponsiveContainer>
+        <ResponsiveContainer><PieChart><Pie data={rectification} dataKey="value" nameKey="name" innerRadius="66%" outerRadius="88%" paddingAngle={3} stroke="var(--surface-card)" strokeWidth={2} isAnimationActive={false}>{rectification.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie></PieChart></ResponsiveContainer>
         <div className="donut-center"><strong>{total}</strong><span>隐患总数</span></div>
       </div>
       <div className="legend-stack">{rectification.map((item) => <div key={item.name}><i style={{ background: item.color }} /><span>{item.name}</span><b>{item.value}</b><em>{((item.value / total) * 100).toFixed(2)}%</em></div>)}</div>
@@ -3269,8 +3266,8 @@ function RectificationChart() {
   );
 }
 
-function StatCard({ title, value, unit, icon: Icon, tone, footer }: { title: string; value: number; unit: string; icon: React.ElementType; tone: string; footer: string[][] }) {
-  return <article className="stat-card"><div className={`stat-icon ${tone}`}><Icon size={48} /></div><div className="stat-main"><span>{title}</span><div><strong>{value}</strong><small>{unit}</small></div><footer>{footer.map(([label, text]) => <p key={label}><span>{label}</span><b>{text}</b></p>)}</footer></div></article>;
+function StatCard({ title, value, unit, icon: Icon, tone, image, footer }: { title: string; value: number; unit: string; icon: React.ElementType; tone: string; image: string; footer: string[][] }) {
+  return <article className="stat-card"><div className="stat-card-visual"><img src={image} alt="" aria-hidden="true" /><span>现场</span></div><div className={`stat-icon ${tone}`}><Icon size={48} /></div><div className="stat-main"><span>{title}</span><div><strong>{value}</strong><small>{unit}</small></div><footer>{footer.map(([label, text]) => <p key={label}><span>{label}</span><b>{text}</b></p>)}</footer></div></article>;
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
@@ -3354,10 +3351,48 @@ function Badge({ label }: { label: string }) {
 }
 
 function LineCard({ data, keys, colors, xKey }: { data: Record<string, string | number>[]; keys: string[]; colors: string[]; xKey: string }) {
-  return <div className="line-card"><ResponsiveContainer><LineChart data={data} margin={{ top: 28, right: 10, left: -24, bottom: 0 }}><XAxis dataKey={xKey} axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 11 }} /><YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 11 }} /><Tooltip /><Legend iconType="plainline" wrapperStyle={{ top: 0, fontSize: 12 }} />{keys.map((key, index) => <Line key={key} type="monotone" dataKey={key} stroke={colors[index]} strokeWidth={2.2} dot={{ r: 2.8, strokeWidth: 1 }} activeDot={{ r: 5 }} />)}</LineChart></ResponsiveContainer></div>;
+  const chartId = useId().replace(/:/g, "");
+  return <div className="line-card" role="img" aria-label={`${keys.join("、")}趋势图`}>
+    <ResponsiveContainer>
+      <LineChart data={data} margin={{ top: 30, right: 14, left: -20, bottom: 2 }}>
+        <defs>{keys.map((key, index) => <linearGradient key={key} id={`${chartId}-fill-${index}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={colors[index]} stopOpacity={0.22} /><stop offset="100%" stopColor={colors[index]} stopOpacity={0.015} /></linearGradient>)}</defs>
+        <CartesianGrid vertical={false} stroke="var(--border-default)" strokeDasharray="2 6" />
+        <XAxis dataKey={xKey} axisLine={false} tickLine={false} tick={{ fill: "var(--text-secondary-dark)", fontSize: 11 }} dy={8} />
+        <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--text-secondary-dark)", fontSize: 11 }} width={30} />
+        <Tooltip contentStyle={{ background: "rgba(12, 38, 62, .96)", border: "1px solid rgba(148, 190, 217, .28)", borderRadius: 9, color: "#f5f8fb", fontSize: 12, boxShadow: "0 12px 30px rgba(7, 27, 49, .18)" }} labelStyle={{ color: "#f1b65c", marginBottom: 4 }} itemStyle={{ color: "#e6f0f6" }} cursor={{ stroke: "var(--border-strong)", strokeDasharray: "4 4" }} />
+        <Legend iconType="plainline" wrapperStyle={{ top: 0, fontSize: 11 }} />
+        {keys.map((key, index) => <Area key={`${key}-area`} type="monotone" dataKey={key} stroke="none" fill={`url(#${chartId}-fill-${index})`} legendType="none" isAnimationActive={false} />)}
+        {keys.map((key, index) => <Line key={key} type="monotone" dataKey={key} stroke={colors[index]} strokeWidth={2.6} strokeLinecap="round" dot={{ r: 2, strokeWidth: 0, fill: colors[index] }} activeDot={{ r: 5, stroke: "var(--surface-card)", strokeWidth: 3, fill: colors[index] }} isAnimationActive={false} />)}
+      </LineChart>
+    </ResponsiveContainer>
+  </div>;
 }
 
-function ShandongMap() {
+function TrackRoutePreview({ points = ["起点", "1号节点", "2号节点", "3号节点", "4号节点", "终点"], nodeCount, onPointClick }: { points?: string[]; nodeCount?: number; onPointClick: (point: string) => void }) {
+  const positions = [
+    { left: 8, top: 72 },
+    { left: 20, top: 34 },
+    { left: 38, top: 32 },
+    { left: 56, top: 58 },
+    { left: 74, top: 42 },
+    { left: 92, top: 30 }
+  ];
+  const visiblePoints = points.slice(0, positions.length);
+  return <div className={`track-map linear ${points.length < 6 ? "multi-track-panel" : ""}`}>
+    <img src={demoMedia.images.locationTrajectoryMap} alt="位置轨迹平面图" />
+    <div className="track-map-grid" aria-hidden="true" />
+    <div className="track-map-topline"><span><i />现场轨迹回放</span><b>{nodeCount ?? visiblePoints.length} 个轨迹节点</b></div>
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="track-route-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stopColor="#f1b65c" /><stop offset="48%" stopColor="#7ec6d8" /><stop offset="100%" stopColor="#f17b69" /></linearGradient></defs>
+      <polyline className="route-shadow" points="8,72 20,34 38,32 56,58 74,42 92,30" />
+      <polyline className="route-line" points="8,72 20,34 38,32 56,58 74,42 92,30" />
+    </svg>
+    {visiblePoints.map((label, index) => { const position = positions[index]; const className = index === 0 ? "start" : index === visiblePoints.length - 1 ? "end" : "point"; return <button type="button" key={label} className={`pin ${className}`} style={{ left: `${position.left}%`, top: `${position.top}%` }} aria-label={`${label}轨迹节点`} onClick={() => onPointClick(label)}>{index === 0 ? "起" : index === visiblePoints.length - 1 ? "终" : index}</button>; })}
+    <div className="track-map-legend" aria-hidden="true"><span><i className="start" />起点</span><span><i className="point" />巡检节点</span><span><i className="end" />终点</span></div>
+  </div>;
+}
+
+function ShandongMap({ onPointClick }: { onPointClick?: (city: string) => void } = {}) {
   const mapPoints = [
     { city: "德州", value: 1, x: 20, y: 30, tone: "green" },
     { city: "济南", value: 12, x: 30, y: 45, tone: "red" },
@@ -3371,10 +3406,12 @@ function ShandongMap() {
   return (
     <div className="shandong-map">
       <svg viewBox="0 0 720 360" role="img" aria-label="山东省风险分布示意图">
-        <path className="province" d="M77 188L96 156L126 141L150 112L204 121L232 101L280 113L300 91L344 109L384 88L427 104L458 80L504 91L535 69L589 96L632 91L664 119L642 151L674 181L634 201L611 236L552 229L516 260L467 244L425 273L375 252L335 284L284 265L242 290L203 255L152 257L126 224L88 220Z" />
+        <defs><linearGradient id="shandong-map-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#234f70" /><stop offset="58%" stopColor="#356b8f" /><stop offset="100%" stopColor="#163b59" /></linearGradient><filter id="shandong-map-glow"><feGaussianBlur stdDeviation="5" /></filter></defs>
+        <path className="province-glow" d="M77 188L96 156L126 141L150 112L204 121L232 101L280 113L300 91L344 109L384 88L427 104L458 80L504 91L535 69L589 96L632 91L664 119L642 151L674 181L634 201L611 236L552 229L516 260L467 244L425 273L375 252L335 284L284 265L242 290L203 255L152 257L126 224L88 220Z" />
+        <path className="province" fill="url(#shandong-map-fill)" d="M77 188L96 156L126 141L150 112L204 121L232 101L280 113L300 91L344 109L384 88L427 104L458 80L504 91L535 69L589 96L632 91L664 119L642 151L674 181L634 201L611 236L552 229L516 260L467 244L425 273L375 252L335 284L284 265L242 290L203 255L152 257L126 224L88 220Z" />
         <path className="county c1" d="M95 164L204 121L236 193L151 255L88 219Z" /><path className="county c2" d="M204 121L300 91L333 181L236 193Z" /><path className="county c3" d="M300 91L427 104L405 194L333 181Z" /><path className="county c4" d="M427 104L535 69L552 173L405 194Z" /><path className="county c5" d="M535 69L664 119L611 236L552 173Z" /><path className="county c6" d="M236 193L333 181L335 284L242 290L151 255Z" /><path className="county c7" d="M333 181L405 194L425 273L335 284Z" /><path className="county c8" d="M405 194L552 173L516 260L425 273Z" /><path className="county c9" d="M552 173L611 236L516 260Z" />
       </svg>
-      {mapPoints.map((point) => <div className={`risk-point ${point.tone}`} style={{ left: `${point.x}%`, top: `${point.y}%` }} key={point.city}><b>{point.value}</b><span>{point.city}</span></div>)}
+      {mapPoints.map((point) => <button type="button" className={`risk-point ${point.tone}`} style={{ left: `${point.x}%`, top: `${point.y}%` }} key={point.city} aria-label={`${point.city}风险点 ${point.value}项`} onClick={() => onPointClick?.(point.city)}><b>{point.value}</b><span>{point.city}</span></button>)}
       <footer className="map-legend"><span><i className="red" />高风险</span><span><i className="orange" />较高风险</span><span><i className="yellow" />中风险</span><span><i className="green" />低风险</span></footer>
     </div>
   );

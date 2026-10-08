@@ -1,5 +1,6 @@
+import { sceneImages, sceneVideos, getMediaSourceNote } from "./demoSceneMedia";
 export type ExpertRisk = "高风险" | "中风险" | "低风险" | "-";
-export type ExpertChannelStatus = "直播中" | "离线";
+export type ExpertChannelStatus = "演示回放" | "离线";
 export type ExpertReviewStatus = "待审核" | "已审核" | "已提交";
 
 export type ExpertVideoChannel = {
@@ -42,6 +43,8 @@ export type ExpertSnapshot = {
   id: string;
   time: string;
   src: string;
+  title: string;
+  sourceNote: string;
 };
 
 export type ExpertChatMessage = {
@@ -58,11 +61,11 @@ export const videoChannels: ExpertVideoChannel[] = [
     point: "配电室巡检",
     inspector: "张三",
     time: "10:28:30",
-    status: "直播中",
+    status: "演示回放",
     risk: "高风险",
     deviceId: "SHM20250516001",
-    thumbnail: "/demo-media/images/evidence_electrical_panel_open.jpg",
-    video: "/demo-media/videos/helmet_live_electrical_inspection.mp4",
+    thumbnail: sceneImages.electricalPanelOpen,
+    video: sceneVideos.helmetLive,
     resolution: "1080P",
     bitrate: "2560kbps",
     latency: "120ms"
@@ -74,11 +77,11 @@ export const videoChannels: ExpertVideoChannel[] = [
     point: "消防通道检查",
     inspector: "李四",
     time: "10:27:58",
-    status: "直播中",
+    status: "演示回放",
     risk: "中风险",
     deviceId: "SHM20250516002",
-    thumbnail: "/demo-media/images/evidence_fire_corridor_blocked.jpg",
-    video: "/demo-media/videos/fire_corridor_obstruction.mp4",
+    thumbnail: sceneImages.fireCorridorBlocked,
+    video: sceneVideos.fireCorridor,
     resolution: "1080P",
     bitrate: "2140kbps",
     latency: "136ms"
@@ -87,14 +90,14 @@ export const videoChannels: ExpertVideoChannel[] = [
     id: "channel-3",
     index: 3,
     project: "鲁商广场",
-    point: "消防泵房检查",
+    point: "消防器材检查",
     inspector: "王五",
     time: "10:26:45",
-    status: "直播中",
+    status: "演示回放",
     risk: "低风险",
     deviceId: "SHM20250516003",
-    thumbnail: "/demo-media/images/evidence_hydrant_extinguisher.jpg",
-    video: "/demo-media/videos/extinguisher_pressure_check.mp4",
+    thumbnail: sceneImages.hydrantExtinguisher,
+    video: sceneVideos.extinguisherPressure,
     resolution: "720P",
     bitrate: "1680kbps",
     latency: "142ms"
@@ -103,14 +106,14 @@ export const videoChannels: ExpertVideoChannel[] = [
     id: "channel-4",
     index: 4,
     project: "高新智造产业园",
-    point: "临时用电检查",
+    point: "动火作业检查",
     inspector: "赵六",
     time: "10:27:12",
-    status: "直播中",
+    status: "演示回放",
     risk: "高风险",
     deviceId: "SHM20250516004",
-    thumbnail: "/demo-media/images/evidence_hot_work_temp_power.jpg",
-    video: "/demo-media/videos/hot_work_temp_power_check.mp4",
+    thumbnail: sceneImages.hotWorkTempPower,
+    video: sceneVideos.hotWorkTempPower,
     resolution: "1080P",
     bitrate: "2480kbps",
     latency: "128ms"
@@ -122,11 +125,11 @@ export const videoChannels: ExpertVideoChannel[] = [
     point: "消防设施检查",
     inspector: "孙七",
     time: "10:26:30",
-    status: "直播中",
+    status: "演示回放",
     risk: "中风险",
     deviceId: "SHM20250516005",
-    thumbnail: "/demo-media/images/evidence_extinguisher_low_pressure.jpg",
-    video: "/demo-media/videos/extinguisher_pressure_check.mp4",
+    thumbnail: sceneImages.extinguisherLowPressure,
+    video: sceneVideos.extinguisherPressure,
     resolution: "720P",
     bitrate: "1960kbps",
     latency: "155ms"
@@ -135,14 +138,14 @@ export const videoChannels: ExpertVideoChannel[] = [
     id: "channel-6",
     index: 6,
     project: "鲁商物流园",
-    point: "仓储巡检",
+    point: "配电设备巡检",
     inspector: "刘洋",
     time: "10:25:50",
     status: "离线",
     risk: "-",
     deviceId: "SHM20250516006",
-    thumbnail: "/demo-media/images/evidence_property_equipment_room.jpg",
-    video: "/demo-media/videos/location_trajectory_replay.mp4",
+    thumbnail: sceneImages.equipmentRoom,
+    video: sceneVideos.helmetLive,
     resolution: "离线",
     bitrate: "-",
     latency: "-"
@@ -165,7 +168,7 @@ export const suspectedHazards: ExpertHazard[] = [
   },
   {
     id: "2",
-    name: "线缆裸露",
+    name: "线缆防护待核查",
     risk: "高风险",
     confidence: "0.89",
     source: "AI识别",
@@ -175,12 +178,12 @@ export const suspectedHazards: ExpertHazard[] = [
   },
   {
     id: "3",
-    name: "灭火器压力不足",
+    name: "灭火器压力待核查",
     risk: "中风险",
     confidence: "0.91",
     source: "AI识别",
     standard: "《建筑灭火器配置验收及检查规范》GB 50444",
-    description: "压力指针偏离绿色区域，需现场复核压力表。",
+    description: "参考图不代表当前器材状态，需现场复核压力表读数。",
     status: "待审核"
   }
 ];
@@ -198,13 +201,13 @@ export const retakeSuggestions = [
 ];
 
 export const screenshots: ExpertSnapshot[] = [
-  { id: "shot-1", time: "10:28:45", src: "/demo-media/images/evidence_electrical_panel_open.jpg" },
-  { id: "shot-2", time: "10:29:12", src: "/demo-media/images/evidence_electrical_cabinet_visible.jpg" },
-  { id: "shot-3", time: "10:29:35", src: "/demo-media/images/evidence_cable_exposed.jpg" },
-  { id: "shot-4", time: "10:30:02", src: "/demo-media/images/evidence_temp_power_box.jpg" },
-  { id: "shot-5", time: "10:30:25", src: "/demo-media/images/rectification_process_04.jpg" },
-  { id: "shot-6", time: "10:31:05", src: "/demo-media/images/evidence_extinguisher_low_pressure.jpg" }
-];
+  { id: "shot-1", time: "10:28:45", title: "配电柜全景", src: sceneImages.electricalPanelOpen },
+  { id: "shot-2", time: "10:29:12", title: "配电柜内部参考", src: sceneImages.electricalCabinetVisible },
+  { id: "shot-3", time: "10:29:35", title: "进线接线细节参考", src: sceneImages.cableExposed },
+  { id: "shot-4", time: "10:30:02", title: "临时配电箱示例", src: sceneImages.temporaryPower },
+  { id: "shot-5", time: "10:30:25", title: "疏散出口参考", src: sceneImages.fireCorridorBlocked },
+  { id: "shot-6", time: "10:31:05", title: "灭火器压力表参考", src: sceneImages.extinguisherLowPressure },
+].map(shot => ({ ...shot, sourceNote: getMediaSourceNote(shot.src) }));
 
 export const chatMessages: ExpertChatMessage[] = [
   { time: "10:28:30", speaker: "张三", text: "现场发现配电箱门未关闭。" },
@@ -228,5 +231,5 @@ export const reportReviewInfo = {
   type: "专家会诊记录",
   evidenceCount: "12项",
   reviewedHazards: "3项",
-  summary: "已确认配电箱未关闭和线缆裸露风险，建议纳入重点整改并补拍整改后照片。"
+  summary: "已确认配电箱未关闭和线缆防护待核查风险，建议纳入重点整改并补拍整改后照片。"
 };

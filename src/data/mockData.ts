@@ -1,3 +1,11 @@
+import { sceneImages } from "./demoSceneMedia";
+// Central entry point for resource-management demo fixtures.
+export { seedOperationWarnings, seedOperationReports, seedOperationRules, operationsPeriod, operationsProjects, reportTemplates } from "./operationsData";
+export { seedCustomers, seedProjects } from "./resourceCustomerProjectData";
+export { seedDevices } from "./resourceDeviceData";
+export { seedTemplates } from "./resourceTemplateData";
+export { seedMembers, seedRoles, seedRules, defaultSystemParameters } from "./resourceSettingsData";
+
 /** Independent operations-workbench design preview. All records are demo data. */
 export type DesignPreviewTask = {
   id: string;
@@ -120,7 +128,7 @@ export const designPreviewHazards: DesignPreviewHazard[] = [
     risk: "高风险",
     dueLabel: "今日待核查",
     owner: "李四",
-    image: "/demo-media/images/evidence_electrical_panel_open.jpg",
+    image: sceneImages.electricalPanelOpen,
     suggestion: "建议由专业电工核查配电箱闭锁及绝缘防护情况，完成整改后补充现场照片。",
   },
   {
@@ -131,18 +139,18 @@ export const designPreviewHazards: DesignPreviewHazard[] = [
     risk: "高风险",
     dueLabel: "今日待核查",
     owner: "王五",
-    image: "/demo-media/images/evidence_fire_corridor_blocked.jpg",
+    image: sceneImages.fireCorridorBlocked,
     suggestion: "建议核查通道净宽与杂物堆放情况，清理占用物，并补充整改前后对比照片。",
   },
   {
     id: "HZ20260920003",
-    title: "灭火器压力疑似不足",
+    title: "灭火器压力待核查",
     project: "国控大厦项目",
     location: "主楼 · 1层消防设施点",
     risk: "中风险",
     dueLabel: "明日到期",
     owner: "张三",
-    image: "/demo-media/images/evidence_extinguisher_low_pressure.jpg",
+    image: sceneImages.extinguisherLowPressure,
     suggestion: "建议现场复核压力表读数，及时更换或维护设备，并更新消防设施检查台账。",
   },
 ];
@@ -164,3 +172,5 @@ export const designPreviewCategories: DesignPreviewCategory[] = [
   { name: "消防设施", value: 1, color: "#24A98B" },
   { name: "临时用电", value: 0, color: "#97A6BA" },
 ];
+
+export { regionalRiskSamples, type RegionalRiskLevel, type RegionalRiskSample } from "./regionalRiskMockData";

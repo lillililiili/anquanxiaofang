@@ -1,0 +1,230 @@
+[
+  {
+    "page": "customers",
+    "bodyFonts": [
+      "13px/400"
+    ],
+    "client": 1425,
+    "kpis": [
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      }
+    ],
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "page": "projects",
+    "bodyFonts": [
+      "13px/400"
+    ],
+    "client": 1425,
+    "kpis": [
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      }
+    ],
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "page": "devices",
+    "bodyFonts": [
+      "13px/400"
+    ],
+    "client": 1425,
+    "kpis": [
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      }
+    ],
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "page": "templates",
+    "bodyFonts": [],
+    "client": 1425,
+    "kpis": [
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      },
+      {
+        "height": 125,
+        "y": 251
+      }
+    ],
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "page": "customers",
+    "bodyFonts": [
+      "13px/400"
+    ],
+    "client": 1905,
+    "kpis": [
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      }
+    ],
+    "scroll": 1905,
+    "width": 1920
+  },
+  {
+    "page": "projects",
+    "bodyFonts": [
+      "13px/400"
+    ],
+    "client": 1905,
+    "kpis": [
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      }
+    ],
+    "scroll": 1905,
+    "width": 1920
+  },
+  {
+    "page": "devices",
+    "bodyFonts": [
+      "13px/400"
+    ],
+    "client": 1905,
+    "kpis": [
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      },
+      {
+        "height": 125,
+        "y": 310
+      }
+    ],
+    "scroll": 1905,
+    "width": 1920
+  },
+  {
+    "page": "templates",
+    "bodyFonts": [],
+    "client": 1905,
+    "kpis": [
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      },
+      {
+        "height": 129,
+        "y": 251
+      }
+    ],
+    "scroll": 1905,
+    "width": 1920
+  }
+]
