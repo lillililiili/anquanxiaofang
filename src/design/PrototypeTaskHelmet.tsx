@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { analyzeHelmetFrame, fetchLatestHelmetAnalysis, formatProviderName, type HelmetAnalysis } from "../services/helmetVision";
 import { AlertCircle, Archive, Camera, Check, ChevronRight, ClipboardCheck, Clock3, Download, FileBarChart, HardHat, Headphones, MapPin, Maximize, Play, Plus, Radio, RefreshCw, Search, Send, Settings2, ShieldCheck, Sparkles, Target, Wifi } from "lucide-react";
 import { sceneImages, sceneVideos } from "../data/demoSceneMedia";
 import { Button, IconButton, Pill, toneFor, PageHeader, SectionCard, MetricCard, Field, Toolbar, Modal, Drawer, downloadText, cx } from "./PrototypeUI";
@@ -161,6 +162,25 @@ const defaultFieldRecords: FieldRecord[] = [
 ].map(row => ({ ...row, taskId: seededTasks[0].id, taskName: seededTasks[0].name }));
 const initialEvents: FieldEvent[] = [{ id: "initial-4", time: "15:04", title: "AI 识别配电箱门未关闭", status: "建议核查" }, { id: "initial-3", time: "14:50", title: "补拍请求已记录", status: "处理中" }, { id: "initial-2", time: "14:40", title: "安全帽进入 B1 配电室", status: "已记录" }, { id: "initial-1", time: "14:30", title: "任务开始，设备完成签到", status: "已完成" }];
 const riskTone = (risk: string) => risk === "中风险" ? "warning" : risk === "低风险" ? "success" : toneFor(risk);
+function clueImageForName(name: string) {
+  if (name.includes("线缆")) return sceneImages.cableExposed;
+  if (name.includes("灭火器")) return sceneImages.extinguisherLowPressure;
+  if (name.includes("通道") || name.includes("疏散")) return sceneImages.fireCorridorBlocked;
+  return sceneImages.electricalPanelOpen;
+}
+function cluesFromAnalysis(analysis: HelmetAnalysis): FieldClue[] {
+  if (!analysis.detections?.length) return fieldClues;
+  return analysis.detections.map((detection) => {
+    const name = detection.hazardName;
+    const key = name.includes("线缆") ? "cable" : name.includes("灭火器") ? "extinguisher" : name.includes("通道") || name.includes("疏散") ? "corridor" : "panel";
+    const checklist = key === "cable" ? "线缆连接情况" : key === "extinguisher" ? "灭火器检查" : key === "corridor" ? "消防通道" : "配电箱门状态";
+    const captured = new Date(analysis.captureTime);
+    const time = Number.isNaN(captured.getTime()) ? nowTime() : captured.toTimeString().slice(0, 8);
+    const confidence = detection.confidence <= 1 ? `${Math.round(detection.confidence * 100)}%` : `${Math.round(detection.confidence)}%`;
+    const risk = /高/.test(detection.riskLevel) ? "高风险" : /中/.test(detection.riskLevel) ? "中风险" : /低/.test(detection.riskLevel) ? "低风险" : "中风险";
+    return { key, title: name, time, risk, confidence, image: clueImageForName(name), description: detection.description || name, measure: detection.rectificationSuggestion || "建议结合现场情况核查并补充证据。", checklist };
+  });
+}
 
 export function HelmetPage({ notify, navigate, expert = false }: PageProps & { expert?: boolean }) {
   const [currentTask, setCurrentTask] = useState<Task>(() => readValue(activeTaskStorage, seededTasks[0]));
@@ -193,6 +213,11 @@ export function HelmetPage({ notify, navigate, expert = false }: PageProps & { e
   const [refreshedAt, setRefreshedAt] = useState("");
   const [analysisAt, setAnalysisAt] = useState("");
   const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [engineLabel, setEngineLabel] = useState("本地演示识别");
+  const [analysisNote, setAnalysisNote] = useState("示例线索仅用于演示，可查看识别结果");
+  const [analysisClues, setAnalysisClues] = useState(fieldClues);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisDemo, setAnalysisDemo] = useState(true);
   const [syncAt, setSyncAt] = useState("");
   const currentHelmet = helmetInventory.find(item => item.name === channel) || helmetInventory[0];
   const activeClue = fieldClues.find(item => item.key === activeKey) || fieldClues[0];
@@ -227,12 +252,52 @@ export function HelmetPage({ notify, navigate, expert = false }: PageProps & { e
   };
   const focusClue = (clue: FieldClue) => { setActiveKey(clue.key); setActiveChecklist(clue.checklist); setInfrared(false); };
   const focusChecklist = (title: string, key: string) => { setActiveChecklist(title); setActiveKey(key); setInfrared(false); };
+  useEffect(() => {
+    let cancelled = false;
+    fetchLatestHelmetAnalysis(currentHelmet.id)
+      .then((analysis) => {
+        if (cancelled || !analysis?.provider) return;
+        setEngineLabel(formatProviderName(analysis.provider));
+        setAnalysisNote(`${formatProviderName(analysis.provider)} · 最近一次识别可再次运行`);
+      })
+      .catch(() => { /* Keep local demo clues when the model is offline. */ });
+    return () => { cancelled = true; };
+  }, [currentHelmet.id]);
+  const runDemoAnalysis = async () => {
+    if (analysisLoading) return;
+    setAnalysisLoading(true);
+    try {
+      const analysis = await analyzeHelmetFrame({ frameSrc: frame, deviceId: currentHelmet.id, taskId: currentTask.id });
+      const clues = cluesFromAnalysis(analysis);
+      const stamp = nowTime();
+      setEngineLabel(formatProviderName(analysis.provider));
+      setAnalysisAt(stamp);
+      setAnalysisClues(clues);
+      setAnalysisDemo(false);
+      setAnalysisNote(`${stamp} · ${formatProviderName(analysis.provider)} · ${clues.length} 条线索，待人工核查`);
+      setAnalysisOpen(true);
+      addEvent(`已调用模型识别：${formatProviderName(analysis.provider)}`, "建议核查");
+      notify(`已调用模型：${formatProviderName(analysis.provider)}`);
+    } catch {
+      const stamp = nowTime();
+      setEngineLabel("本地演示识别");
+      setAnalysisAt(stamp);
+      setAnalysisClues(fieldClues);
+      setAnalysisDemo(true);
+      setAnalysisNote(`${stamp} · 模型未连接，已展示本地演示线索`);
+      setAnalysisOpen(true);
+      addEvent("模型未连接，已生成本地演示识别结果", "建议核查");
+      notify("模型未连接，已展示本地演示线索");
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
   return <div className="page-stack prototype-helmet-page"><PageHeader eyebrow={expert ? "EXPERT DESK / 05" : "FIELD OPS / 03"} title={expert ? "远程专家" : "安全帽现场"} description="任务、设备、画面、清单、AI 线索和隐患取证集中在现场工作面 · 本地演示数据" actions={<><Button variant="secondary" icon={Download} onClick={exportEvidence}>导出证据包</Button><Button icon={Headphones} onClick={toggleTalk}>{talking ? "结束对讲" : "开始对讲"}</Button></>} />
     <Toolbar className="prototype-field-filter"><Field label="项目筛选"><select value={project} onChange={event => changeProject(event.target.value)}>{projectNames.map(item => <option key={item}>{item}</option>)}</select></Field><Field label="现场设备"><select value={channel} onChange={event => switchChannel(event.target.value)}>{visibleHelmets.map(item => <option key={item.id} value={item.name}>{item.name} · {item.status}</option>)}</select></Field><span className="prototype-muted">{currentHelmet.status === "离线" ? "离线设备仅显示最近示例素材" : "本地示例通道 · 不连接真实设备"}</span><Button variant="secondary" icon={Settings2} onClick={() => setSettingsOpen(true)}>现场设置</Button><Button variant="ghost" onClick={() => goTo(navigate, "/")}>退出现场</Button></Toolbar>
     <div className="helmet-context-strip"><div><span>当前任务</span><strong title={currentTask.name}>{currentTask.name}</strong><small>{currentTask.id} · {currentTask.project}</small></div><div><span>检查员</span><strong>{currentTask.inspector}</strong><small>{currentTask.status} · {Math.round(completedChecks / checklist.length * 100)}% 完成</small></div><div><span>回传状态</span><strong><i className="live-dot" />{currentHelmet.status === "离线" ? "离线素材预览" : "演示通道就绪"}</strong><small>示例延迟 280ms · {hdMode ? "1080P" : "720P"}</small></div><div><span>设备电量</span><strong>{currentHelmet.battery}</strong><small>{currentHelmet.network} · 最近回传 {currentHelmet.lastSeen}</small></div></div>
     <div className={cx("field-monitor-grid", expert && "expert-layout")}><aside className="channel-panel"><div className="channel-head"><div><div className="eyebrow">LIVE CHANNELS</div><h2>现场通道</h2></div><Pill tone="success">{visibleHelmets.filter(item => item.status !== "离线").length} 在线</Pill></div>{visibleHelmets.map(item => <button className={cx("channel-item", channel === item.name && "active")} type="button" key={item.name} onClick={() => switchChannel(item.name)}><span className="channel-avatar"><HardHat size={17} /></span><span><strong>{item.name}</strong><small>{item.project} · {item.wearer}</small></span><span className={cx("channel-state", item.status === "离线" && "offline")}><Wifi size={13} />{item.status}</span></button>)}{!visibleHelmets.length && <p>当前项目暂无现场通道。</p>}<div className="channel-footer"><Button variant="secondary" icon={RefreshCw} onClick={() => { setRefreshedAt(nowTime()); addEvent("现场通道列表已刷新"); }}>刷新通道</Button>{refreshedAt && <small className="prototype-channel-update" role="status">最近刷新 {refreshedAt}</small>}<div className="prototype-channel-task"><span>检查开始时间</span><strong>{currentTask.date} {currentTask.time}</strong><span>任务模板</span><strong>{currentTask.template}</strong></div></div></aside>
       <section className="stream-panel"><div className="stream-head"><div><Pill tone="info">DEMO</Pill><strong>{channel}</strong></div><div className="stream-head-actions"><Button variant="ghost" onClick={() => setHdMode(value => !value)}>{hdMode ? "1080P" : "720P"}</Button><IconButton label="放大当前画面" onClick={() => setPreview({ title: `${channel} · 当前画面`, src: frame, type: "image", note: "本地场景参考素材，不是真实视频回传。" })}><Maximize size={16} /></IconButton><IconButton label="保存当前画面" onClick={() => downloadAsset(frame, `${channel}-现场示例.jpg`)}><Download size={16} /></IconButton></div></div><div className={cx("stream-stage", infrared && "thermal-stage", lightOn && "prototype-light-on")}><img src={frame} alt={`${activeClue.title}场景参考`} /><div className="stream-grid-lines" /><div className="stream-hud-top"><Pill tone="danger">疑似线索 {fieldClues.length}</Pill><span>{infrared ? "红外测温演示" : activeChecklist}</span></div><div className="stream-center"><Radio size={34} /><strong>{recording ? "现场录制演示中" : "现场参考画面"}</strong><span>{talking ? "语音对讲演示已开启" : `${hdMode ? "高清" : "标准"}素材 · ${lightOn ? "补光灯已开启" : "点击截图保存证据"}`}</span></div><div className="stream-location"><MapPin size={14} />{currentHelmet.project} · 检查现场</div></div>
-        <div className="prototype-model-summary"><div><span>当前识别引擎</span><strong>本地演示识别</strong><small>{analysisAt ? `${analysisAt} · ${fieldClues.length} 条示例线索，待人工核查` : "示例线索仅用于演示，可查看识别结果"}</small></div><Button variant="secondary" icon={Sparkles} onClick={() => { setAnalysisAt(nowTime()); setAnalysisOpen(true); addEvent("已生成本地演示识别结果", "建议核查"); }}>运行演示识别</Button></div>
+        <div className="prototype-model-summary"><div><span>当前识别引擎</span><strong>{engineLabel}</strong><small>{analysisNote}</small></div><Button variant="secondary" icon={Sparkles} disabled={analysisLoading} onClick={runDemoAnalysis}>{analysisLoading ? "识别中..." : "运行演示识别"}</Button></div>
         <div className="stream-toolbar"><button className={recording ? "active" : ""} onClick={toggleRecording}><Radio size={15} />{recording ? "停止录制" : "开始录制"}</button><button className={talking ? "active" : ""} onClick={toggleTalk}><Headphones size={15} />{talking ? "结束对讲" : "语音对讲"}</button><button className={infrared ? "active" : ""} onClick={() => setInfrared(value => !value)}><Target size={15} />红外测温</button><button className={lightOn ? "active" : ""} onClick={() => setLightOn(value => !value)}><Sparkles size={15} />补光灯</button><button onClick={() => capture()}><Archive size={15} />截图取证</button><button onClick={() => setPreview({ title: "历史关键帧", src: records.find(row => row.source === channel)?.image || frame, type: "image", note: `来源设备：${channel} · 本地保存的示例证据。` })}><Camera size={15} />历史帧</button><button className="sos" onClick={() => setSosOpen(true)}><AlertCircle size={15} />SOS</button></div><div className="stream-metrics"><div><span>回传延迟（示例）</span><strong>280ms</strong></div><div><span>电量</span><strong>{currentHelmet.battery}</strong></div><div><span>轨迹点</span><strong>36</strong></div><div><span>音频</span><strong>{talking ? "对讲演示中" : "待机"}</strong></div></div></section>
       <aside className="incident-panel"><div className="incident-head"><div><div className="eyebrow">AI CLUES</div><h2>疑似隐患</h2></div><Pill tone="danger">{fieldClues.length} 待确认</Pill></div>{fieldClues.map(clue => <button className={cx("incident-item", activeKey === clue.key && "active")} type="button" key={clue.key} onClick={() => { focusClue(clue); setSelectedClue(clue); }}><span className="incident-icon"><AlertCircle size={16} /></span><span><strong>{clue.title}</strong><small>{clue.time} · 置信度 {clue.confidence}</small></span><Pill tone={riskTone(clue.risk)}>{clue.risk}</Pill></button>)}<div className="incident-actions"><Button icon={Target} onClick={() => registerClue(activeClue)}>登记隐患</Button><Button variant="secondary" icon={Send} onClick={() => setReviewOpen(true)}>发送复核指令</Button></div><HelmetRetakePanel key={`${currentTask.id}-${channel}`} taskId={currentTask.id} channel={channel} frame={frame} onFocus={() => { focusChecklist("线缆连接情况", "cable"); }} onSave={image => { capture(image, "配电箱内部线缆补拍证据"); setChecklist(items => items.map(item => item.title === "现场照片取证" ? { ...item, state: "正常" } : item)); }} /></aside></div>
     <SectionCard title="巡检轨迹与时间线" eyebrow="INSPECTION TIMELINE" action={<span className="prototype-muted">已巡检：35 分钟 / 预计：60 分钟 · 演示</span>}><div className="prototype-patrol-timeline"><div className="prototype-patrol-bar">{[["正常", "14:30–14:45", "normal", 24], ["异常", "14:45–15:00", "abnormal", 23], ["当前", "15:00–15:05", "current", 8], ["待检查", "15:05–15:30", "pending", 45]].map(([label, range, state, width]) => <button key={label} className={String(state)} style={{ flex: Number(width) }} title={`${label} ${range}`} onClick={() => setPreview({ title: `${label}巡检轨迹 ${range}`, src: sceneVideos.locationReplay, type: "video", note: "本地轨迹图片轮播示例，供演示回放。" })}><span>{label}</span></button>)}</div><div className="prototype-time-labels"><span>14:30</span><span>14:45</span><span>15:00</span><span>15:15</span><span>15:30</span></div></div></SectionCard>
@@ -244,7 +309,7 @@ export function HelmetPage({ notify, navigate, expert = false }: PageProps & { e
     <Modal title="复核指令" open={reviewOpen} onClose={() => setReviewOpen(false)}><div className="form-grid"><Field label="复核专家" wide><select value={reviewTarget} onChange={event => setReviewTarget(event.target.value)}><option>王工 · 电气专家</option><option>赵工 · 消防安全专家</option><option>孙工 · 注册安全工程师</option></select></Field><Field label="关联线索" wide><input readOnly value={activeClue.title} /></Field><Field label="复核说明" wide><textarea value={reviewNote} onChange={event => setReviewNote(event.target.value)} /></Field></div><p className="prototype-muted">指令将记入本地现场时间线，不向人员发送真实消息。</p><div className="modal-foot"><Button variant="secondary" onClick={() => setReviewOpen(false)}>取消</Button><Button onClick={() => { if (!reviewNote.trim()) { notify("请填写复核说明"); return; } addEvent(`复核指令 → ${reviewTarget}：${reviewNote.trim()}`, "待复核"); setReviewOpen(false); notify("复核指令已保存至本地时间线"); }}>保存复核指令</Button></div></Modal>
     <Modal title="SOS 紧急求助" open={sosOpen} onClose={() => setSosOpen(false)}><div className="sos-card"><AlertCircle size={24} /><div><strong>将记录现场位置和当前画面</strong><p>{channel} · {currentHelmet.project}</p><p>演示接收方：运营工作台、远程专家、项目安全负责人。本操作只新增本地求助记录。</p></div></div><div className="modal-foot"><Button variant="secondary" onClick={() => setSosOpen(false)}>取消</Button><Button onClick={() => { addEvent(`SOS 求助：${channel}，${currentHelmet.project}，已关联当前画面`, "待响应"); capture(frame, "SOS 求助现场证据"); setSosOpen(false); notify("紧急求助演示记录已保存"); }}>确认记录求助</Button></div></Modal>
     <Modal title="现场终端设置" open={settingsOpen} onClose={() => setSettingsOpen(false)}><div className="form-grid"><Field label="画面清晰度"><select value={hdMode ? "1080P" : "720P"} onChange={event => setHdMode(event.target.value === "1080P")}><option>1080P</option><option>720P</option></select></Field><Field label="补光灯"><select value={lightOn ? "开启" : "关闭"} onChange={event => setLightOn(event.target.value === "开启")}><option>开启</option><option>关闭</option></select></Field><Field label="画面模式"><select value={infrared ? "红外测温" : "普通画面"} onChange={event => setInfrared(event.target.value === "红外测温")}><option>普通画面</option><option>红外测温</option></select></Field></div><p className="prototype-muted">设置即时应用到当前演示画面。</p><div className="modal-foot"><Button onClick={() => setSettingsOpen(false)}>完成</Button></div></Modal>
-    <Modal title="本地演示识别结果" open={analysisOpen} onClose={() => setAnalysisOpen(false)} wide><p className="prototype-note">{analysisAt} · 使用预置示例线索演示识别结果，未请求模型或设备接口。建议结合现场取证和专家复核确认。</p><div className="prototype-analysis-list">{fieldClues.map(clue => <button key={clue.key} onClick={() => { focusClue(clue); setAnalysisOpen(false); setSelectedClue(clue); }}><img src={clue.image} alt={clue.title} /><span>{clue.title}<small>示例置信度 {clue.confidence} · {clue.checklist}</small></span><Pill tone={riskTone(clue.risk)}>{clue.risk}</Pill><ChevronRight size={15} /></button>)}</div><div className="modal-foot"><Button variant="secondary" onClick={() => setAnalysisOpen(false)}>关闭</Button><Button onClick={() => { downloadText("本地演示识别结果.json", JSON.stringify({ demo: true, captureTime: analysisAt, device: channel, detections: fieldClues }, null, 2), "application/json;charset=utf-8"); }}>导出识别结果</Button></div></Modal>
+    <Modal title={analysisDemo ? "本地演示识别结果" : "识别结果"} open={analysisOpen} onClose={() => setAnalysisOpen(false)} wide><p className="prototype-note">{analysisNote}。建议结合现场取证和专家复核确认。</p><div className="prototype-analysis-list">{analysisClues.map(clue => <button key={`${clue.key}-${clue.title}`} onClick={() => { focusClue(clue); setAnalysisOpen(false); setSelectedClue(clue); }}><img src={clue.image} alt={clue.title} /><span>{clue.title}<small>置信度 {clue.confidence} · {clue.checklist}</small></span><Pill tone={riskTone(clue.risk)}>{clue.risk}</Pill><ChevronRight size={15} /></button>)}</div><div className="modal-foot"><Button variant="secondary" onClick={() => setAnalysisOpen(false)}>关闭</Button><Button onClick={() => { downloadText("识别结果.json", JSON.stringify({ demo: analysisDemo, captureTime: analysisAt, device: channel, engine: engineLabel, detections: analysisClues }, null, 2), "application/json;charset=utf-8"); }}>导出识别结果</Button></div></Modal>
     <Modal title={preview?.title || "现场证据预览"} open={Boolean(preview)} onClose={() => setPreview(null)} wide>{preview && <><div className="prototype-media-preview">{preview.type === "image" ? <img src={preview.src} alt={preview.title} /> : <video src={preview.src} controls preload="metadata" />}</div><p className="prototype-note">{preview.note}</p><div className="modal-foot"><Button variant="secondary" onClick={() => setPreview(null)}>关闭</Button><Button icon={Download} onClick={() => downloadAsset(preview.src, `${preview.title}.${preview.type === "image" ? "jpg" : "webm"}`)}>下载{preview.type === "image" ? "图片" : "片段"}</Button></div></>}</Modal>
   </div>;
 }

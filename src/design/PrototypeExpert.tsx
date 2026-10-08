@@ -3,17 +3,9 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Camera, ChevronLeft, Download, FileText, Headphones, LayoutDashboard, Lightbulb, Mic, MonitorCog, Radio, RefreshCw, Search, SquarePen } from "lucide-react";
 import { getHazardScene } from "../data/demoSceneMedia";
 import { chatMessages as expertChatMessages, reportReviewInfo, retakeSuggestions, selectedVideo, screenshots as expertScreenshots, suspectedHazards as expertHazards, taskInfo, videoChannels, type ExpertHazard, type ExpertSnapshot, type ExpertVideoChannel } from "../data/expertMockData";
-import HazardGraphCompletePage from "./ThemePrototypeGraph";
-import ThemePrototypeRegionMap from "./ThemePrototypeRegionMap";
-import ThemePrototypeSettings from "./ThemePrototypeSettings";
 import ExpertSceneSelector from "./ExpertSceneSelector";
-import PrototypeResources, { isPrototypeResourcePage } from "./PrototypeResources";
-import "./theme-prototype.css";
-import "./theme-prototype-layout.css";
-import "./theme-prototype-overdue.css";
-import "./theme-prototype-retake.css";
-import "./theme-prototype-resources.css";
 
+import { sendRetakeInstruction, sendTalkbackAudio, startWebrtcCall, stopWebrtcCall } from "../services/expertDeviceAdapter";
 import { Button, Pill, toneFor, PageHeader, SectionCard, Modal, downloadText } from "./PrototypeUI";
 export default function RemoteExpertCompletePage({ notify, navigate }: { notify: (message: string) => void; navigate: (path: string) => void }) {
   const [hazardReviews, setHazardReviews] = useState<Record<string, {opinion:string;reviewChoice:string;severity:string}>>({});
@@ -79,7 +71,23 @@ export default function RemoteExpertCompletePage({ notify, navigate }: { notify:
   const switchChannel = (channel: ExpertVideoChannel) => { saveDraft(); setActiveChannel(channel); setSelectedSnapshot(""); };
 
   const capture = () => { const next = { id: `shot-${Date.now()}`, time: "10:31:18", title: activeChannel.point, src: activeChannel.thumbnail, sourceNote: "演示频道封面 · 模拟截图" }; setSnapshotsState((items) => [next, ...items].slice(0, 8)); setSelectedSnapshot(next.id); notify("截图已保存"); };
-  const toggleTalk = () => { const next = !talking; setTalking(next); if (next) { addMessage(`演示对讲已开始，请说明${activeChannel.point}的现场情况。`); notify("演示对讲已建立"); } else notify("语音对讲已结束"); };
+  const toggleTalk = async () => {
+    try {
+      if (!talking) {
+        await startWebrtcCall(activeChannel.deviceId);
+        await sendTalkbackAudio(activeChannel.deviceId, `请说明${activeChannel.point}的现场情况。`);
+        setTalking(true);
+        addMessage(`演示对讲已开始，请说明${activeChannel.point}的现场情况。`);
+        notify("演示对讲已建立");
+      } else {
+        await stopWebrtcCall(activeChannel.deviceId);
+        setTalking(false);
+        notify("语音对讲已结束");
+      }
+    } catch {
+      notify("对讲指令未能下发，请稍后重试");
+    }
+  };
   const sendRetake = () => { setPanel("补拍指令"); };
   const submitReview = () => { if (!opinion.trim()) { setReviewResult("请填写审核意见后提交。"); return; } setPanel("提交专家审核"); };
   const confirmReview = () => {
@@ -102,7 +110,7 @@ export default function RemoteExpertCompletePage({ notify, navigate }: { notify:
     <div className="expert-bottom-actions"><Button variant="secondary" onClick={saveDraft}>暂存</Button><Button onClick={submitReview}>提交审核</Button><Button onClick={generateMinutes}><FileText size={16} />生成专家会诊记录</Button><Button onClick={() => navigate("/reports")}><LayoutDashboard size={16} />进入报告中心</Button><Button variant="secondary" onClick={() => setPanel("停止演示接入")}>停止接入</Button></div>
     <Modal title={preview?.title ?? "截图预览"} open={Boolean(preview)} onClose={() => setPreview(null)}><img className="preview-image" src={preview?.src} alt={preview?.title} /><p className="muted-note">{preview?.sourceNote}</p><div className="modal-foot"><Button variant="secondary" onClick={() => { if (preview) { const link=document.createElement("a"); link.href=preview.src; link.download=`${preview.title}.jpg`; link.click(); } }}>下载证据</Button><Button onClick={() => setPreview(null)}>关闭</Button></div></Modal>
     <Modal title={panel} open={Boolean(panel)} onClose={() => setPanel("")} wide>
-      {panel === "补拍指令" && <><p>当前现场：{activeChannel.project} · {activeChannel.point} · {activeChannel.inspector}</p><label className="field"><span>补拍要求</span><textarea value={instruction} onChange={e => setInstruction(e.target.value)} /></label><p className="muted-note">提交后记录到当前会诊对话，供演示现场协作流程。</p><div className="modal-foot"><Button disabled={!instruction.trim()} onClick={() => { addMessage(`补拍要求：${instruction.trim()}`); setPanel(""); setReviewResult("补拍要求已加入当前会诊记录"); }}>记录补拍指令</Button></div></>}
+      {panel === "补拍指令" && <><p>当前现场：{activeChannel.project} · {activeChannel.point} · {activeChannel.inspector}</p><label className="field"><span>补拍要求</span><textarea value={instruction} onChange={e => setInstruction(e.target.value)} /></label><p className="muted-note">提交后记录到当前会诊对话，并下发补拍提示。</p><div className="modal-foot"><Button disabled={!instruction.trim()} onClick={async () => { try { await sendRetakeInstruction(activeChannel.deviceId, instruction.trim()); addMessage(`补拍要求：${instruction.trim()}`); setPanel(""); setReviewResult("补拍要求已加入当前会诊记录"); notify("补拍提示已下发"); } catch { notify("补拍指令未能下发，请稍后重试"); } }}>记录补拍指令</Button></div></>}
       {panel === "提交专家审核" && <><dl className="detail-grid"><span>疑似隐患</span><strong>{focusedHazard.name}</strong><span>审核结论</span><strong>{reviewChoice}</strong><span>建议等级</span><strong>{severity}</strong><span>审核意见</span><strong>{opinion}</strong></dl><p className="muted-note">确认后保存审核结果；确认隐患可继续进入隐患登记。</p><div className="modal-foot"><Button variant="secondary" onClick={() => setPanel("")}>返回编辑</Button><Button onClick={confirmReview}>确认提交审核</Button></div></>}
       {panel === "停止演示接入" && <><p>将暂停当前现场的演示回放与对讲，已保存的会诊记录和证据保留。</p><div className="modal-foot"><Button onClick={() => { saveDraft(); setConnected(false); setTalking(false); setRecording(false); setPanel(""); }}>确认停止</Button></div></>}
       {panel === "会诊消息" && <div className="prototype-workflow-list">{messages.map((m,i) => <article key={i}><h3>{m.speaker} · {m.time}</h3><p>{m.text}</p></article>)}{!messages.length && <p>当前频道暂无会诊消息。</p>}</div>}
